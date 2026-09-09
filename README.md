@@ -83,64 +83,62 @@ Role-based sign-in screen for administrators.
 
 <img src="docs/screenshots/login.png" alt="PAMS Login screenshot" width="420">
 
-> The app also includes dedicated pages for **Schedule**, **Emergency Broadcasting**, **Students**, **SMS**, **Email**, **Logs**, and **Settings** — not pictured here.
+### Schedule — recurring & one-off announcements
+View active schedules and queue new text, audio, video, or TTS announcements for a future date and time.
+
+<img src="docs/screenshots/schedule.png" alt="PAMS Schedule screenshot" width="850">
+
+### Emergency — one-tap crisis broadcast
+Trigger fire, earthquake, lockdown, evacuation, or medical alerts that override every display and speaker zone at once, plus manage emergency audio files and procedures.
+
+<img src="docs/screenshots/emergency.png" alt="PAMS Emergency screenshot" width="850">
+
+### Students — recipient database
+Add, edit, bulk-import (CSV), or remove student/contact records used across the announcement workflow.
+
+<img src="docs/screenshots/students.png" alt="PAMS Students screenshot" width="850">
+
+### SMS & Email — additional notification channels
+Compose and send SMS or email announcements to selected recipients, with a running history of what was sent. *(Provider access is disabled in this public build — see [External Notification Services](#-external-notification-services).)*
+
+<p>
+  <img src="docs/screenshots/sms.png" alt="PAMS SMS screenshot" width="415">
+  <img src="docs/screenshots/email.png" alt="PAMS Email screenshot" width="415">
+</p>
+
+### Logs — full activity history
+Filter the complete system activity log by type, status, or date range, and export results to CSV.
+
+<img src="docs/screenshots/logs.png" alt="PAMS Logs screenshot" width="850">
+
+### Settings — device configuration & diagnostics
+Configure the Arduino serial port, audio output, display resolution, and default volume; test individual relays/speakers; and manage admin/staff user accounts.
+
+<img src="docs/screenshots/settings.png" alt="PAMS Settings screenshot" width="850">
 
 ---
 
 ## 🏗️ System Architecture
 
-```text
-                         ┌─────────────────────┐
-                         │       Browser       │
-                         │  Admin Web Interface│
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                    ┌──────────────────────────────┐
-                    │      Flask Web Application    │
-                    │                              │
-                    │  • Authentication            │
-                    │  • Announcements             │
-                    │  • Scheduling                │
-                    │  • Student Management        │
-                    │  • System Monitoring         │
-                    └──────────────┬───────────────┘
-                                   │
-              ┌────────────────────┼────────────────────┐
-              │                    │                    │
-              ▼                    ▼                    ▼
-        ┌───────────┐       ┌────────────┐      ┌──────────────┐
-        │  SQLite   │       │ Scheduler  │      │ Audio / TTS  │
-        │ Database  │       │            │      │ Processing   │
-        └───────────┘       └────────────┘      └──────┬───────┘
-                                                       │
-                                                       ▼
-                                              ┌────────────────┐
-                                              │ Raspberry Pi   │
-                                              │ Display Engine │
-                                              └───────┬────────┘
-                                                      │
-                                              Serial / USB
-                                                      │
-                                                      ▼
-                                              ┌────────────────┐
-                                              │  Arduino Uno   │
-                                              │ Relay Control  │
-                                              └───────┬────────┘
-                                                      │
-                                                      ▼
-                                           ┌────────────────────┐
-                                           │ Speaker Zones      │
-                                           │ Relay-Controlled   │
-                                           └────────────────────┘
-```
+<img src="docs/screenshots/architecture.png" alt="PAMS system architecture diagram" width="850">
+
+**Data flow**
+
+1. The administrator interacts with the Flask web app in the browser to create, schedule, or trigger announcements.
+2. Flask reads/writes SQLite, hands time-based jobs to the Scheduler, and generates announcement audio through the TTS/pygame pipeline.
+3. The Raspberry Pi display engine renders the resulting text, image, or video content and sends relay commands to the Arduino over a serial/USB connection.
+4. The Arduino firmware switches the relay bank, activating the targeted speaker zones — completing the loop from a single web action to a campus-wide broadcast.
+
+The SMS and email modules sit alongside the same Flask app but are disabled in this public build (see [External Notification Services](#-external-notification-services)).
 
 ---
 
 ## 🛠️ Technology Stack
 
+<div align="center">
+
 | Category | Technologies |
-|---|---|
+|:---:|:---:|
 | **Backend** | Python, Flask |
 | **Frontend** | HTML, CSS, JavaScript, Bootstrap 5 |
 | **Database** | SQLite |
@@ -150,6 +148,8 @@ Role-based sign-in screen for administrators.
 | **Hardware** | Raspberry Pi, Arduino Uno, Relay Module |
 | **Communication** | PySerial |
 | **Security** | Werkzeug Password Hashing, Cryptography |
+
+</div>
 
 ---
 
