@@ -1,0 +1,656 @@
+{% extends "base.html" %}
+
+{% block title %}Schedule Announcements - TCC Display System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Schedule Announcements</h2>
+        <button class="btn btn-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#scheduleModal">
+            <i class="bi bi-plus-circle me-2"></i>New Schedule
+        </button>
+    </div>
+
+    
+    <div class="card border-0 shadow-sm mb-4" style="border: 2px solid #800000 !important;">
+        <div class="card-header text-white" style="background-color: #800000;">
+            <h5 class="mb-0"><i class="bi bi-calendar-check me-2"></i>Active Schedules</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Content</th>
+                            <th>Schedule Time</th>
+                            <th>Duration</th>
+                            <th>Speakers</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Loading schedules...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #800000;">
+                <h5 class="modal-title">Create Schedule</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Announcement Type</label>
+                        <select class="form-select" id="scheduleType" required>
+                            <option value="">Select Type</option>
+                            <option value="text">Text Display</option>
+                            <option value="audio">Audio</option>
+                            <option value="video">Video</option>
+                            <option value="tts">Text-to-Speech</option>
+                        </select>
+                    </div>
+
+                    <!-- Content Selection (Dynamic — shown for audio/video) -->
+                    <div class="mb-3" id="contentSelection" style="display: none;">
+                        <label class="form-label" id="contentLabel">Content</label>
+
+                        
+                        <ul class="nav nav-tabs nav-tabs-sm mb-2" id="contentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active py-1 px-3" id="tab-select-btn"
+                                        data-bs-toggle="tab" data-bs-target="#tab-select"
+                                        type="button" role="tab">
+                                    <i class="bi bi-folder2-open me-1"></i>Select Existing
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link py-1 px-3" id="tab-upload-btn"
+                                        data-bs-toggle="tab" data-bs-target="#tab-upload"
+                                        type="button" role="tab">
+                                    <i class="bi bi-upload me-1"></i>Upload New
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            
+                            <div class="tab-pane fade show active" id="tab-select" role="tabpanel">
+                                <select class="form-select" id="scheduleContent">
+                                    <option value="">Loading...</option>
+                                </select>
+                            </div>
+
+                            
+                            <div class="tab-pane fade" id="tab-upload" role="tabpanel">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="file" class="form-control" id="scheduleFileUpload" accept="">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            id="scheduleUploadBtn" onclick="uploadScheduleFile()">
+                                        <i class="bi bi-cloud-upload me-1"></i>Upload
+                                    </button>
+                                </div>
+                                <div id="uploadResult" class="mt-2 small text-success d-none"></div>
+                            </div>
+                        </div>
+
+                        
+                        <input type="hidden" id="scheduleContentPath">
+                    </div>
+
+                    <!-- Text Input for Text Display -->
+                    <div class="mb-3" id="textInput" style="display: none;">
+                        <label class="form-label">Display Text</label>
+                        <textarea class="form-control" id="scheduleText" rows="3"></textarea>
+                    </div>
+
+                    
+                    <div class="mb-3" id="ttsInput" style="display: none;">
+                        <label class="form-label">Text to Speak</label>
+                        <textarea class="form-control" id="scheduleTtsText" rows="3"></textarea>
+                    </div>
+
+                    
+                    <div class="mb-3" id="speakerSelection">
+                        <label class="form-label">Speakers</label>
+                        <div class="row">
+                            <div class="col-6 col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="scheduleSpeaker1" value="1">
+                                    <label class="form-check-label" for="scheduleSpeaker1">Speaker 1</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="scheduleSpeaker2" value="2">
+                                    <label class="form-check-label" for="scheduleSpeaker2">Speaker 2</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="scheduleSpeaker3" value="3">
+                                    <label class="form-check-label" for="scheduleSpeaker3">Speaker 3</label>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="scheduleSpeaker4" value="4">
+                                    <label class="form-check-label" for="scheduleSpeaker4">Speaker 4</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="scheduleDate" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Time</label>
+                            <div class="input-group">
+                                <select class="form-select" id="scheduleHour" required>
+                                    <option value="">HH</option>
+                                    <option value="01">01</option>
+                                    <option value="02">02</option>
+                                    <option value="03">03</option>
+                                    <option value="04">04</option>
+                                    <option value="05">05</option>
+                                    <option value="06">06</option>
+                                    <option value="07">07</option>
+                                    <option value="08">08</option>
+                                    <option value="09">09</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                </select>
+                                <span class="input-group-text">:</span>
+                                <select class="form-select" id="scheduleMinute" required>
+                                    <option value="">MM</option>
+                                    <option value="00">00</option>
+                                    <option value="05">05</option>
+                                    <option value="10">10</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                    <option value="25">25</option>
+                                    <option value="30">30</option>
+                                    <option value="35">35</option>
+                                    <option value="40">40</option>
+                                    <option value="45">45</option>
+                                    <option value="50">50</option>
+                                    <option value="55">55</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">AM / PM</label>
+                            <select class="form-select" id="scheduleAmPm" required>
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Repeat</label>
+                        <select class="form-select" id="scheduleRepeat">
+                            <option value="once">Once</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekdays">Weekdays</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </div>
+
+                    <!-- Display Duration -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-hourglass-split me-1"></i>Display Duration
+                            <small class="text-muted fw-normal ms-1">— how long before returning to idle</small>
+                        </label>
+                        
+                        <div class="d-flex flex-wrap gap-2 mb-2" id="durationBtns">
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="0">
+                                No Limit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="30">
+                                30 sec
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="60">
+                                1 min
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="120">
+                                2 min
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="300">
+                                5 min
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="600">
+                                10 min
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="900">
+                                15 min
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary dur-btn" data-seconds="1800">
+                                30 min
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary dur-btn" data-seconds="custom">
+                                Custom
+                            </button>
+                        </div>
+                        
+                        <div id="customDurationWrap" style="display:none;" class="d-flex align-items-center gap-2">
+                            <input type="number" class="form-control form-control-sm" id="customDurationInput"
+                                   min="1" max="86400" placeholder="Enter seconds" style="max-width:160px;">
+                            <span class="text-muted small">seconds</span>
+                        </div>
+                        
+                        <input type="hidden" id="scheduleDuration" value="0">
+                        <small class="text-muted" id="durationHint">No limit — stays until manually changed.</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary rounded-pill" id="saveScheduleBtn">
+                    <i class="bi bi-check-circle me-2"></i>Save Schedule
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dur-btn.btn-primary {
+    background-color: #800000;
+    border-color: #800000;
+    color: #fff;
+}
+.dur-btn.btn-primary:hover {
+    background-color: #600000;
+    border-color: #600000;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadSchedules();
+
+    // Duration quick-select buttons
+    document.querySelectorAll('.dur-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.dur-btn').forEach(b => {
+                b.classList.remove('btn-primary', 'btn-secondary-active');
+                b.classList.add('btn-outline-secondary');
+                if (b.dataset.seconds === 'custom') b.classList.replace('btn-outline-secondary','btn-outline-primary');
+            });
+            this.classList.remove('btn-outline-secondary', 'btn-outline-primary');
+            this.classList.add('btn-primary');
+
+            const val = this.dataset.seconds;
+            if (val === 'custom') {
+                document.getElementById('customDurationWrap').style.display = 'flex';
+                document.getElementById('scheduleDuration').value = '';
+                document.getElementById('durationHint').textContent = 'Enter a custom number of seconds.';
+            } else {
+                document.getElementById('customDurationWrap').style.display = 'none';
+                document.getElementById('scheduleDuration').value = val;
+                document.getElementById('durationHint').textContent =
+                    val === '0' ? 'No limit — stays until manually changed.'
+                                : `Returns to idle after ${formatDuration(parseInt(val))}.`;
+            }
+        });
+    });
+
+    // Custom duration input — sync to hidden field
+    document.getElementById('customDurationInput').addEventListener('input', function() {
+        document.getElementById('scheduleDuration').value = this.value || 0;
+        document.getElementById('durationHint').textContent =
+            this.value ? `Returns to idle after ${formatDuration(parseInt(this.value))}.` : '';
+    });
+
+    // Sync dropdown selection to hidden path field
+    document.getElementById('scheduleContent').addEventListener('change', function() {
+        document.getElementById('scheduleContentPath').value = this.value;
+    });
+
+    // Select "No Limit" by default
+    document.querySelector('.dur-btn[data-seconds="0"]').click();
+
+    // Handle type change
+    document.getElementById('scheduleType').addEventListener('change', function() {
+        const type = this.value;
+        document.getElementById('contentSelection').style.display = 'none';
+        document.getElementById('textInput').style.display        = 'none';
+        document.getElementById('ttsInput').style.display         = 'none';
+        document.getElementById('speakerSelection').style.display = 'block';
+        document.getElementById('scheduleContentPath').value      = '';
+        document.getElementById('uploadResult').classList.add('d-none');
+
+        if (type === 'text') {
+            document.getElementById('textInput').style.display        = 'block';
+            document.getElementById('speakerSelection').style.display = 'none';
+        } else if (type === 'tts') {
+            document.getElementById('ttsInput').style.display = 'block';
+        } else if (type === 'audio' || type === 'video') {
+            document.getElementById('contentSelection').style.display = 'block';
+            document.getElementById('contentLabel').textContent =
+                type === 'audio' ? 'Audio File' : 'Video File';
+            // Set accepted file types on the upload input
+            document.getElementById('scheduleFileUpload').accept =
+                type === 'audio' ? '.mp3,.wav,.ogg,.m4a' : '.mp4,.avi,.mkv,.mov,.webm';
+            // Switch back to "Select" tab and reload list
+            const selectTab = document.getElementById('tab-select-btn');
+            bootstrap.Tab.getOrCreateInstance(selectTab).show();
+            loadContent(type);
+        }
+    });
+    
+    // Save schedule
+    document.getElementById('saveScheduleBtn').addEventListener('click', function() {
+        const type = document.getElementById('scheduleType').value;
+        const date   = document.getElementById('scheduleDate').value;
+        const hour   = document.getElementById('scheduleHour').value;
+        const minute = document.getElementById('scheduleMinute').value;
+        const ampm   = document.getElementById('scheduleAmPm').value;
+        const repeat = document.getElementById('scheduleRepeat').value;
+
+        // Convert 12h -> 24h for backend storage
+        let h24 = parseInt(hour, 10);
+        if (ampm === 'AM' && h24 === 12) h24 = 0;
+        if (ampm === 'PM' && h24 !== 12) h24 += 12;
+        const time = `${String(h24).padStart(2,'0')}:${minute}:00`;
+
+        let content = '';
+        if (type === 'text') {
+            content = document.getElementById('scheduleText').value.trim();
+        } else if (type === 'tts') {
+            content = document.getElementById('scheduleTtsText').value.trim();
+        } else {
+            // For audio/video: prefer the uploaded-file path, else selected dropdown value
+            const uploadedPath = document.getElementById('scheduleContentPath').value.trim();
+            const selectedPath = document.getElementById('scheduleContent').value.trim();
+            content = uploadedPath || selectedPath;
+        }
+
+        const speakers = [];
+        for (let i = 1; i <= 4; i++) {
+            if (document.getElementById(`scheduleSpeaker${i}`)?.checked) {
+                speakers.push(i);
+            }
+        }
+
+        if (!type || !date || !hour || !minute || !content) {
+            tccAlert('Please fill in all required fields.', 'warning');
+            return;
+        }
+        
+        const duration_seconds = parseInt(document.getElementById('scheduleDuration').value || 0);
+
+        fetch('/api/schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, content, date, time, repeat, speakers, duration_seconds })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                document.getElementById('scheduleForm').reset();
+                document.getElementById('contentSelection').style.display = 'none';
+                document.getElementById('textInput').style.display = 'none';
+                document.getElementById('ttsInput').style.display = 'none';
+                document.getElementById('customDurationWrap').style.display = 'none';
+                document.querySelector('.dur-btn[data-seconds="0"]').click();
+                loadSchedules();
+            } else {
+                tccAlert('Error: ' + (data.error || 'Unknown error'), 'danger');
+            }
+        })
+        .catch(err => tccAlert('Request failed: ' + err.message, 'danger'));
+    });
+});
+
+// Delegated click handlers for dynamically-rendered table rows
+document.getElementById('scheduleTableBody').addEventListener('click', function(e) {
+    const triggerBtn = e.target.closest('.btn-trigger');
+    const deleteBtn  = e.target.closest('.btn-delete');
+    if (triggerBtn) triggerNow(triggerBtn.dataset.id);
+    if (deleteBtn)  deleteSchedule(deleteBtn.dataset.id);
+});
+
+function loadSchedules() {
+    fetch('/api/schedules')
+        .then(r => r.ok ? r.json() : Promise.resolve({schedules: []}))
+        .then(data => {
+            const tbody = document.getElementById('scheduleTableBody');
+            if (data.schedules && data.schedules.length > 0) {
+                tbody.innerHTML = data.schedules.map(s => {
+                    const shortContent = s.content.length > 50
+                        ? s.content.substring(0, 50) + '...' : s.content;
+                    const speakersText = (() => {
+                        try { const sp = JSON.parse(s.speakers); return sp.length ? sp.join(', ') : 'N/A'; }
+                        catch { return s.speakers || 'N/A'; }
+                    })();
+                    const dur = s.duration_seconds && s.duration_seconds > 0
+                        ? `<span class="badge bg-info text-dark"><i class="bi bi-hourglass-split me-1"></i>${formatDuration(s.duration_seconds)}</span>`
+                        : `<span class="badge bg-secondary">No limit</span>`;
+                    const badgeClass = s.status === 'active' ? 'bg-success' : 'bg-secondary';
+                    return `<tr>
+                        <td><span class="badge bg-primary">${s.type}</span></td>
+                        <td title="${s.content}">${shortContent}</td>
+                        <td>${formatScheduleTime(s.scheduled_time)}</td>
+                        <td>${dur}</td>
+                        <td>${speakersText}</td>
+                        <td><span class="badge ${badgeClass}">${s.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-success me-1 btn-trigger" data-id="${s.id}" title="Trigger Now">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger btn-delete" data-id="${s.id}" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No schedules found. Click "New Schedule" to add one.</td></tr>';
+            }
+        })
+        .catch(() => {
+            document.getElementById('scheduleTableBody').innerHTML =
+                '<tr><td colspan="7" class="text-center text-danger">Failed to load schedules.</td></tr>';
+        });
+}
+
+function formatScheduleTime(raw) {
+    // raw = "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM" — convert to 12h AM/PM
+    if (!raw) return '';
+    const parts = raw.split(' ');
+    const datePart = parts[0] || '';
+    const timePart = parts[1] || '';
+    if (!timePart) return raw;
+    const [hStr, mStr] = timePart.split(':');
+    let h = parseInt(hStr, 10);
+    const m = mStr ? mStr.padStart(2,'0') : '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${datePart} ${h}:${m} ${ampm}`;
+}
+
+function formatDuration(seconds) {
+    if (!seconds || seconds === 0) return 'No limit';
+    if (seconds < 60)  return `${seconds}s`;
+    if (seconds < 3600) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return s > 0 ? `${m}m ${s}s` : `${m}m`;
+    }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
+
+let _currentContentType = '';
+
+function loadContent(type) {
+    _currentContentType = type;
+    const select = document.getElementById('scheduleContent');
+    const url    = type === 'audio' ? '/api/media/audio' : '/api/media/video';
+    const noun   = type === 'audio' ? 'audio' : 'video';
+
+    select.innerHTML = `<option value="">Loading ${noun} files...</option>`;
+    document.getElementById('scheduleContentPath').value = '';
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.files || data.files.length === 0) {
+                select.innerHTML = `<option value="">No ${noun} files found — upload one below</option>`;
+                // Auto-switch to Upload tab
+                bootstrap.Tab.getOrCreateInstance(
+                    document.getElementById('tab-upload-btn')
+                ).show();
+                return;
+            }
+            select.innerHTML = `<option value="">-- Select ${noun} file --</option>` +
+                data.files.map(f =>
+                    `<option value="${f.path}">${f.name}</option>`
+                ).join('');
+        })
+        .catch(() => {
+            select.innerHTML = `<option value="">Error loading files</option>`;
+        });
+}
+
+function uploadScheduleFile() {
+    const fileInput  = document.getElementById('scheduleFileUpload');
+    const uploadBtn  = document.getElementById('scheduleUploadBtn');
+    const resultDiv  = document.getElementById('uploadResult');
+    const file       = fileInput.files[0];
+    const mediaType  = _currentContentType;
+
+    if (!file) { tccAlert('Please choose a file first.', 'warning'); return; }
+    if (!mediaType) { tccAlert('Please select an announcement type first.', 'warning'); return; }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('media_type', mediaType);
+
+    uploadBtn.disabled    = true;
+    uploadBtn.innerHTML   = '<span class="spinner-border spinner-border-sm"></span>';
+    resultDiv.classList.add('d-none');
+
+    fetch('/api/schedule/upload', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            uploadBtn.disabled  = false;
+            uploadBtn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Upload';
+            if (data.success) {
+                // Store path in hidden field so saveSchedule picks it up
+                document.getElementById('scheduleContentPath').value = data.path;
+                resultDiv.className    = 'mt-2 small text-success';
+                resultDiv.textContent  = `Uploaded: ${data.name}`;
+                resultDiv.classList.remove('d-none');
+                // Also add the new file to the dropdown and select it
+                const opt = new Option(data.name, data.path, true, true);
+                document.getElementById('scheduleContent').add(opt);
+            } else {
+                resultDiv.className   = 'mt-2 small text-danger';
+                resultDiv.textContent = 'Upload failed: ' + data.error;
+                resultDiv.classList.remove('d-none');
+            }
+        })
+        .catch(err => {
+            uploadBtn.disabled  = false;
+            uploadBtn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Upload';
+            resultDiv.className   = 'mt-2 small text-danger';
+            resultDiv.textContent = 'Upload error: ' + err.message;
+            resultDiv.classList.remove('d-none');
+        });
+}
+
+function triggerNow(id) {
+    tccConfirm(
+        'Trigger this scheduled announcement now?',
+        'Trigger Announcement',
+        () => {
+            fetch(`/api/schedule/${id}/trigger`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.duration_seconds && data.duration_seconds > 0) {
+                        sessionStorage.setItem('revertAt', Date.now() + data.duration_seconds * 1000);
+                    } else {
+                        sessionStorage.removeItem('revertAt');
+                    }
+                    showToast('Announcement triggered!', data.duration_seconds > 0
+                        ? `Will return to idle in ${formatDuration(data.duration_seconds)}.`
+                        : 'Running until manually stopped.');
+                } else {
+                    tccAlert('Error: ' + (data.error || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(err => tccAlert('Request failed: ' + err.message, 'danger'));
+        },
+        'Trigger'
+    );
+}
+
+// Simple toast notification
+function showToast(title, message) {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:9999;';
+        document.body.appendChild(container);
+    }
+    const id = 'toast_' + Date.now();
+    container.insertAdjacentHTML('beforeend', `
+        <div id="${id}" class="toast align-items-center text-white bg-success border-0 show mb-2" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <strong>${title}</strong><br><small>${message}</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                        onclick="document.getElementById('${id}').remove()"></button>
+            </div>
+        </div>`);
+    setTimeout(() => { const el = document.getElementById(id); if (el) el.remove(); }, 5000);
+}
+
+function deleteSchedule(id) {
+    tccConfirm(
+        'Delete this scheduled announcement permanently?',
+        'Delete Schedule',
+        () => {
+            fetch(`/api/schedule/${id}`, {method: 'DELETE'})
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) { loadSchedules(); }
+                else { tccAlert('Error: ' + (data.error || 'Unknown error'), 'danger'); }
+            })
+            .catch(err => tccAlert('Request failed: ' + err.message, 'danger'));
+        },
+        'Delete'
+    );
+}
+</script>
+{% endblock %}

@@ -1,0 +1,851 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - TCC Display System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">System Settings</h2>
+
+    <!-- Row 1: Device Configuration + Relay Testing -->
+    <div class="row g-4 mb-4">
+
+        <!-- Device Configuration -->
+        <div class="col-lg-6 d-flex flex-column">
+            <div class="card border-0 shadow-sm flex-fill" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Device Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form id="deviceForm">
+                        <div class="mb-3">
+                            <label class="form-label">Arduino Serial Port</label>
+                            <select class="form-select" id="serialPort" name="serialPort">
+                                <option value="/dev/ttyACM0">/dev/ttyACM0 (default)</option>
+                                <option value="/dev/ttyUSB0">/dev/ttyUSB0</option>
+                                <option value="/dev/ttyACM1">/dev/ttyACM1</option>
+                            </select>
+                            <small class="text-muted">Usually /dev/ttyACM0 or /dev/ttyUSB0 on Raspberry Pi</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Audio Output</label>
+                            <select class="form-select" id="audioOutput" name="audioOutput">
+                                <option value="default">Default</option>
+                                <option value="hdmi">HDMI</option>
+                                <option value="usb">USB Audio</option>
+                                <option value="jack">3.5mm Jack</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Display Resolution</label>
+                            <select class="form-select" id="displayResolution" name="displayResolution">
+                                <option value="1920x1080">1920x1080 (Full HD)</option>
+                                <option value="1280x720">1280x720 (HD)</option>
+                                <option value="1366x768">1366x768</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Default Volume (%)</label>
+                            <input type="range" class="form-range" id="defaultVolume"
+                                   name="defaultVolume" min="0" max="100" value="80"
+                                   oninput="document.getElementById('volumeVal').textContent = this.value + '%'">
+                            <small class="text-muted">Current: <span id="volumeVal">80%</span></small>
+                        </div>
+
+                        <div id="deviceAlert" class="alert d-none"></div>
+
+                        <button type="submit" class="btn btn-primary rounded-pill">
+                            <i class="bi bi-check-circle me-2"></i>Save Device Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-lg-6 d-flex flex-column">
+            <div class="card border-0 shadow-sm flex-fill" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-tools me-2"></i>Relay &amp; Speaker Testing</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Click to pulse each relay for 1 second.</p>
+
+                    
+                    <div class="alert alert-light border mb-3 py-2 px-3 small">
+                        <strong>Wiring (relay board IN → function):</strong><br>
+                        IN1=Speaker 1 &nbsp; IN2=Speaker 2 &nbsp; IN3=Speaker 3 &nbsp; IN4=Speaker 4<br>
+                        IN5=Green LED &nbsp; IN6=Red LED
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" onclick="testRelay(1)">
+                                <i class="bi bi-volume-up me-1"></i> Speaker 1 <small class="text-muted">(IN1)</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" onclick="testRelay(2)">
+                                <i class="bi bi-volume-up me-1"></i> Speaker 2 <small class="text-muted">(IN2)</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" onclick="testRelay(3)">
+                                <i class="bi bi-volume-up me-1"></i> Speaker 3 <small class="text-muted">(IN3)</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-primary w-100" onclick="testRelay(4)">
+                                <i class="bi bi-volume-up me-1"></i> Speaker 4 <small class="text-muted">(IN4)</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-success w-100" onclick="testRelay(5)">
+                                <i class="bi bi-circle-fill me-1 text-success"></i> Green LED <small class="text-muted">(IN5)</small>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="btn btn-outline-danger w-100" onclick="testRelay(6)">
+                                <i class="bi bi-circle-fill me-1 text-danger"></i> Red LED <small class="text-muted">(IN6)</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary w-100 rounded-pill" onclick="testAllSpeakers()">
+                        <i class="bi bi-broadcast me-2"></i>Test All Speakers (2 s)
+                    </button>
+
+                    <div id="relayAlert" class="alert d-none mt-3"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    
+    <div class="row g-4 mb-4">
+
+        
+        <div class="col-lg-6 d-flex flex-column">
+            <div class="card border-0 shadow-sm flex-fill" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-people me-2"></i>User Management</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary rounded-pill mb-3"
+                            data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="bi bi-plus-circle me-2"></i>Add User
+                    </button>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        
+        <div class="col-lg-6 d-flex flex-column">
+            <div class="card border-0 shadow-sm flex-fill" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Change Password</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Update your own account password. You will need to provide your current password.</p>
+                    <div id="changePassAlert" class="alert d-none"></div>
+                    <form id="changePassForm" onsubmit="changeOwnPassword(event)">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Current Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="currentPassword"
+                                       placeholder="Enter current password" required>
+                                <button type="button" class="btn btn-outline-secondary"
+                                        onclick="toggleVis('currentPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="newPassword"
+                                       placeholder="At least 6 characters" required>
+                                <button type="button" class="btn btn-outline-secondary"
+                                        onclick="toggleVis('newPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Confirm New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirmPassword"
+                                       placeholder="Repeat new password" required>
+                                <button type="button" class="btn btn-outline-secondary"
+                                        onclick="toggleVis('confirmPassword', this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary rounded-pill w-100">
+                            <i class="bi bi-check-circle me-2"></i>Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>System Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td><strong>System Version</strong></td>
+                                <td>1.0.0</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Database</strong></td>
+                                <td>SQLite</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Display Engine</strong></td>
+                                <td>Tkinter + OpenCV</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Arduino</strong></td>
+                                <td>
+                                    <span id="arduinoStatus" class="badge bg-secondary">Checking...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="resetUserPassModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: #800000;">
+                <h5 class="modal-title">
+                    <i class="bi bi-shield-lock me-2"></i>Reset Password for
+                    <span id="resetTargetUsername" class="fw-bold"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="resetPassAlert" class="alert d-none"></div>
+                <p class="text-muted small">As admin you can set a new password without knowing the current one.</p>
+                <form id="resetPassForm">
+                    <input type="hidden" id="resetTargetId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">New Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="resetNewPassword"
+                                   placeholder="At least 6 characters" required>
+                            <button type="button" class="btn btn-outline-secondary"
+                                    onclick="toggleVis('resetNewPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Confirm New Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="resetConfirmPassword"
+                                   placeholder="Repeat new password" required>
+                            <button type="button" class="btn btn-outline-secondary"
+                                    onclick="toggleVis('resetConfirmPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary rounded-pill"
+                        data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger rounded-pill" onclick="submitResetPassword()">
+                    <i class="bi bi-key me-2"></i>Reset Password
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="permissionsModal" tabindex="-1" aria-labelledby="permissionsModalTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color:#800000;">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="permissionsModalTitle">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    Permissions &mdash; <span id="permUsername" class="fw-normal ms-1"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 py-3">
+                <p class="text-muted small mb-3">
+                    Toggle which sections and actions this staff member can access.
+                    Announcements are always enabled for all staff.
+                </p>
+                <input type="hidden" id="permUserId">
+
+                
+                <div class="card border-0 bg-light rounded-3 mb-3">
+                    <div class="card-body py-2 px-3">
+                        <p class="fw-semibold mb-2 small text-uppercase text-secondary" style="letter-spacing:.05em;">
+                            <i class="bi bi-people me-1"></i>Students
+                        </p>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_students_view" role="switch">
+                                <label class="form-check-label small" for="perm_students_view">View List</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_students_add" role="switch">
+                                <label class="form-check-label small" for="perm_students_add">Add / Upload</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_students_edit" role="switch">
+                                <label class="form-check-label small" for="perm_students_edit">Edit</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_students_delete" role="switch">
+                                <label class="form-check-label small" for="perm_students_delete">Delete</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="card border-0 bg-light rounded-3 mb-3">
+                    <div class="card-body py-2 px-3">
+                        <p class="fw-semibold mb-2 small text-uppercase text-secondary" style="letter-spacing:.05em;">
+                            <i class="bi bi-file-text me-1"></i>Log Reports
+                        </p>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_logs_view" role="switch">
+                                <label class="form-check-label small" for="perm_logs_view">View Logs</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_logs_delete" role="switch">
+                                <label class="form-check-label small" for="perm_logs_delete">Delete Logs</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="card border-0 bg-light rounded-3 mb-2">
+                    <div class="card-body py-2 px-3">
+                        <p class="fw-semibold mb-2 small text-uppercase text-secondary" style="letter-spacing:.05em;">
+                            <i class="bi bi-grid me-1"></i>Other Modules
+                        </p>
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_schedule" role="switch">
+                                <label class="form-check-label small" for="perm_schedule">Schedule</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_emergency" role="switch">
+                                <label class="form-check-label small" for="perm_emergency">Emergency</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="perm_announcements" role="switch" checked disabled>
+                                <label class="form-check-label small text-muted" for="perm_announcements">Announcements (always on)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="permAlert" class="alert d-none mt-3 mb-0 py-2 small"></div>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                        data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn rounded-pill px-4 fw-semibold"
+                        style="background-color:#800000;color:#fff;" onclick="savePermissions()">
+                    <i class="bi bi-shield-check me-2"></i>Save Permissions
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalTitle">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color:#800000;">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="addUserModalTitle">
+                    <i class="bi bi-person-plus-fill"></i> Add New User
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 pt-4 pb-2">
+                <div id="addUserAlert" class="alert d-none rounded-3 mb-3"></div>
+                <form id="addUserForm" novalidate autocomplete="off">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="newUsername">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background:#f8f0f0;border-color:#dee2e6;">
+                                <i class="bi bi-person" style="color:#800000;"></i>
+                            </span>
+                            <input type="text" class="form-control" id="newUsername"
+                                   placeholder="Enter username" required autocomplete="off">
+                        </div>
+                        <div class="invalid-feedback" id="newUsernameFeedback">Username is required.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="newUserPassword">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background:#f8f0f0;border-color:#dee2e6;">
+                                <i class="bi bi-lock" style="color:#800000;"></i>
+                            </span>
+                            <input type="password" class="form-control" id="newUserPassword"
+                                   placeholder="At least 6 characters" required autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary"
+                                    onclick="toggleVis('newUserPassword', this)" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback" id="newUserPasswordFeedback">Password must be at least 6 characters.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="newUserConfirmPassword">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background:#f8f0f0;border-color:#dee2e6;">
+                                <i class="bi bi-lock-fill" style="color:#800000;"></i>
+                            </span>
+                            <input type="password" class="form-control" id="newUserConfirmPassword"
+                                   placeholder="Repeat password" required autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary"
+                                    onclick="toggleVis('newUserConfirmPassword', this)" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback" id="newUserConfirmFeedback">Passwords do not match.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="newRole">Role</label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="background:#f8f0f0;border-color:#dee2e6;">
+                                <i class="bi bi-shield" style="color:#800000;"></i>
+                            </span>
+                            <select class="form-select" id="newRole">
+                                <option value="staff">Staff</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <small class="text-muted">Staff can manage students, logs, and announcements. Admin has full access.</small>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer border-0 px-4 pb-4 pt-2">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                        data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn rounded-pill px-4 fw-semibold"
+                        style="background-color:#800000;color:#fff;" onclick="addUser()">
+                    <i class="bi bi-person-check me-2"></i>Create User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    loadSettings();
+    loadUsers();
+    checkArduino();
+
+    document.getElementById('deviceForm').addEventListener('submit', saveDeviceSettings);
+});
+
+
+function loadSettings() {
+    fetch('/api/settings')
+        .then(r => r.json())
+        .then(data => {
+            const s = data.settings || {};
+            const set = (id, val) => {
+                const el = document.getElementById(id);
+                if (el && val !== undefined && val !== null) el.value = val;
+            };
+            set('serialPort',        s['arduino_port']);
+            set('audioOutput',       s['audio_output']);
+            set('displayResolution', s['display_resolution']);
+            set('defaultVolume',     s['volume']);
+            if (s['volume']) {
+                document.getElementById('volumeVal').textContent = s['volume'] + '%';
+            }
+        })
+        .catch(() => {});
+}
+
+function saveDeviceSettings(e) {
+    e.preventDefault();
+    const body = {
+        serialPort:        document.getElementById('serialPort').value,
+        audioOutput:       document.getElementById('audioOutput').value,
+        displayResolution: document.getElementById('displayResolution').value,
+        defaultVolume:     document.getElementById('defaultVolume').value,
+    };
+
+    fetch('/api/settings/device', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+    })
+    .then(r => r.json())
+    .then(data => showAlert('deviceAlert', data.success, data.success ? 'Device settings saved.' : data.error))
+    .catch(err => showAlert('deviceAlert', false, err.message));
+}
+
+
+function testRelay(channel) {
+    fetch('/api/relay/test', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ channel }),
+    })
+    .then(r => r.json())
+    .then(data => showAlert('relayAlert', data.success, data.success ? `Relay ${channel} pulsed.` : data.error))
+    .catch(err => showAlert('relayAlert', false, err.message));
+}
+
+function testAllSpeakers() {
+    fetch('/api/relay/test-all', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => showAlert('relayAlert', data.success, data.success ? 'All speakers pulsed for 2 s.' : data.error))
+        .catch(err => showAlert('relayAlert', false, err.message));
+}
+
+/* ---- Arduino status ---- */
+function checkArduino() {
+    fetch('/api/arduino/status')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('arduinoStatus');
+            if (data.connected) {
+                badge.className  = 'badge bg-success';
+                badge.textContent = 'Connected';
+            } else {
+                badge.className  = 'badge bg-danger';
+                badge.textContent = 'Disconnected';
+            }
+        })
+        .catch(() => {
+            const badge = document.getElementById('arduinoStatus');
+            badge.className  = 'badge bg-warning text-dark';
+            badge.textContent = 'Unknown';
+        });
+}
+
+
+const IS_ADMIN = '{{ session.get("role") }}' === 'admin';
+
+function loadUsers() {
+    fetch('/api/users')
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById('userTableBody');
+            if (!data.users || data.users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No users found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.users.map(u => `
+                <tr>
+                    <td>${u.username}</td>
+                    <td><span class="badge ${u.role === 'admin' ? 'bg-danger' : 'bg-secondary'}">${u.role}</span></td>
+                    <td><small>${u.created_at ? u.created_at.substring(0, 10) : '-'}</small></td>
+                    <td class="text-nowrap">
+                        ${IS_ADMIN ? `
+                        <button class="btn btn-sm btn-outline-warning rounded-pill me-1"
+                                data-uid="${u.id}" data-uname="${u.username}"
+                                onclick="openResetModal(this.dataset.uid, this.dataset.uname)">
+                            <i class="bi bi-key me-1"></i>Reset
+                        </button>
+                        ${u.role === 'staff' ? `
+                        <button class="btn btn-sm btn-outline-primary rounded-pill"
+                                data-uid="${u.id}" data-uname="${u.username}"
+                                onclick="openPermissionsModal(this.dataset.uid, this.dataset.uname)">
+                            <i class="bi bi-shield-lock me-1"></i>Permissions
+                        </button>` : ''}
+                        ` : '-'}
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(() => {});
+}
+
+function addUser() {
+    const usernameEl = document.getElementById('newUsername');
+    const passwordEl = document.getElementById('newUserPassword');
+    const confirmEl  = document.getElementById('newUserConfirmPassword');
+    const username   = usernameEl.value.trim();
+    const password   = passwordEl.value;
+    const confirm    = confirmEl.value;
+    const role       = document.getElementById('newRole').value;
+
+    // Clear previous validation state
+    [usernameEl, passwordEl, confirmEl].forEach(el => {
+        el.classList.remove('is-invalid', 'is-valid');
+    });
+
+    let valid = true;
+
+    if (!username) {
+        usernameEl.classList.add('is-invalid');
+        document.getElementById('newUsernameFeedback').textContent = 'Username is required.';
+        valid = false;
+    } else {
+        usernameEl.classList.add('is-valid');
+    }
+
+    if (!password || password.length < 6) {
+        passwordEl.classList.add('is-invalid');
+        document.getElementById('newUserPasswordFeedback').textContent =
+            !password ? 'Password is required.' : 'Password must be at least 6 characters.';
+        valid = false;
+    } else {
+        passwordEl.classList.add('is-valid');
+    }
+
+    if (!confirm || confirm !== password) {
+        confirmEl.classList.add('is-invalid');
+        document.getElementById('newUserConfirmFeedback').textContent =
+            !confirm ? 'Please confirm the password.' : 'Passwords do not match.';
+        valid = false;
+    } else if (password.length >= 6) {
+        confirmEl.classList.add('is-valid');
+    }
+
+    if (!valid) return;
+
+    const btn = document.querySelector('#addUserModal .modal-footer button:last-child');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating…'; }
+
+    fetch('/api/users/add', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ username, password, role }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-check me-2"></i>Create User'; }
+        if (data.success) {
+            document.getElementById('addUserForm').reset();
+            [usernameEl, passwordEl, confirmEl].forEach(el => el.classList.remove('is-valid'));
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            loadUsers();
+            showAlert('deviceAlert', true, `User "${username}" created successfully.`);
+        } else {
+            showAlert('addUserAlert', false, data.error || 'Failed to create user.');
+        }
+    })
+    .catch(err => {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-check me-2"></i>Create User'; }
+        showAlert('addUserAlert', false, err.message);
+    });
+}
+
+
+function changeOwnPassword(e) {
+    e.preventDefault();
+    const current  = document.getElementById('currentPassword').value;
+    const newPass  = document.getElementById('newPassword').value;
+    const confirm  = document.getElementById('confirmPassword').value;
+
+    if (newPass !== confirm) {
+        showAlert('changePassAlert', false, 'New passwords do not match.');
+        return;
+    }
+
+    fetch('/api/users/change-password', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+            current_password: current,
+            new_password:     newPass,
+            confirm_password: confirm,
+        }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('changePassForm').reset();
+            showAlert('changePassAlert', true, 'Password updated successfully.');
+        } else {
+            showAlert('changePassAlert', false, data.error || 'Failed to update password.');
+        }
+    })
+    .catch(err => showAlert('changePassAlert', false, err.message));
+}
+
+
+function openResetModal(userId, username) {
+    document.getElementById('resetTargetId').value       = userId;
+    document.getElementById('resetTargetUsername').textContent = username;
+    document.getElementById('resetPassForm').reset();
+    document.getElementById('resetPassAlert').className  = 'alert d-none';
+    new bootstrap.Modal(document.getElementById('resetUserPassModal')).show();
+}
+
+function submitResetPassword() {
+    const userId  = document.getElementById('resetTargetId').value;
+    const newPass = document.getElementById('resetNewPassword').value;
+    const confirm = document.getElementById('resetConfirmPassword').value;
+
+    if (!newPass || !confirm) {
+        showAlert('resetPassAlert', false, 'Both fields are required.');
+        return;
+    }
+    if (newPass !== confirm) {
+        showAlert('resetPassAlert', false, 'Passwords do not match.');
+        return;
+    }
+
+    fetch(`/api/users/${userId}/reset-password`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ new_password: newPass, confirm_password: confirm }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('resetUserPassModal')).hide();
+            showAlert('deviceAlert', true, `Password for "${data.username}" reset successfully.`);
+        } else {
+            showAlert('resetPassAlert', false, data.error || 'Failed to reset password.');
+        }
+    })
+    .catch(err => showAlert('resetPassAlert', false, err.message));
+}
+
+
+const PERM_KEYS = [
+    'students_view', 'students_add', 'students_edit', 'students_delete',
+    'logs_view', 'logs_delete', 'schedule', 'emergency', 'announcements'
+];
+
+function openPermissionsModal(userId, username) {
+    document.getElementById('permUserId').value           = userId;
+    document.getElementById('permUsername').textContent   = username;
+    document.getElementById('permAlert').className        = 'alert d-none';
+
+    // Reset all switches first
+    PERM_KEYS.forEach(k => {
+        const el = document.getElementById('perm_' + k);
+        if (el) el.checked = false;
+    });
+
+    fetch(`/api/users/${userId}/permissions`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                showAlert('deviceAlert', false, data.error || 'Could not load permissions.');
+                return;
+            }
+            const perms = data.permissions || {};
+            PERM_KEYS.forEach(k => {
+                const el = document.getElementById('perm_' + k);
+                if (el && !el.disabled) el.checked = !!perms[k];
+            });
+            new bootstrap.Modal(document.getElementById('permissionsModal')).show();
+        })
+        .catch(err => showAlert('deviceAlert', false, err.message));
+}
+
+function savePermissions() {
+    const userId = document.getElementById('permUserId').value;
+    const perms  = {};
+    PERM_KEYS.forEach(k => {
+        const el = document.getElementById('perm_' + k);
+        if (el && !el.disabled) perms[k] = el.checked;
+    });
+    // announcements is always true
+    perms['announcements'] = true;
+
+    fetch(`/api/users/${userId}/permissions`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ permissions: perms }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('permissionsModal')).hide();
+            showAlert('deviceAlert', true, 'Permissions saved successfully.');
+        } else {
+            const el = document.getElementById('permAlert');
+            el.className    = 'alert alert-danger mt-3 mb-0 py-2 small';
+            el.textContent  = data.error || 'Failed to save permissions.';
+        }
+    })
+    .catch(err => {
+        const el = document.getElementById('permAlert');
+        el.className   = 'alert alert-danger mt-3 mb-0 py-2 small';
+        el.textContent = err.message;
+    });
+}
+
+/* ---- Helpers ---- */
+function toggleVis(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon  = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+function showAlert(id, success, message) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = `alert ${success ? 'alert-success' : 'alert-danger'}`;
+    el.textContent = message;
+    el.classList.remove('d-none');
+    setTimeout(() => { el.className = 'alert d-none'; }, 6000);
+}
+</script>
+{% endblock %}

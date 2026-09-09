@@ -1,0 +1,6 @@
+student_id,name,email,phone,year,program
+SAMPLE001,Sample Student 01,sample01@example.com,09000000001,1,BSCPE
+SAMPLE002,Sample Student 02,sample02@example.com,09000000002,2,BSE
+SAMPLE003,Sample Student 03,sample03@example.com,09000000003,3,BPA
+SAMPLE004,Sample Student 04,sample04@example.com,09000000004,4,BTVTED
+SAMPLE005,Sample Student 05,sample05@example.com,09000000005,1,BSMA

@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Email Announcements - TCC Display System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">Email Announcements</h2>
+
+    <div class="row">
+        <!-- Send Email Form -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-envelope me-2"></i>Send Email</h5>
+                </div>
+                <div class="card-body">
+                    <form id="emailForm">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="emailSubject" required>
+                        </div>
+
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Message Format</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="emailFormat" id="formatText" value="text" checked>
+                                <label class="btn btn-outline-primary" for="formatText">Plain Text</label>
+                                
+                                <input type="radio" class="btn-check" name="emailFormat" id="formatHtml" value="html">
+                                <label class="btn btn-outline-primary" for="formatHtml">HTML</label>
+                            </div>
+                        </div>
+
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" id="emailMessage" rows="8" required></textarea>
+                        </div>
+
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Program</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="allPrograms" checked>
+                                    <label class="form-check-label" for="allPrograms">All Programs</label>
+                                </div>
+                                <div id="programCheckboxes" style="display: none;">
+                                    <div class="form-check">
+                                        <input class="form-check-input program-check" type="checkbox" value="BSCPE" id="progBSCPE">
+                                        <label class="form-check-label" for="progBSCPE">BSCPE</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input program-check" type="checkbox" value="BSE" id="progBSE">
+                                        <label class="form-check-label" for="progBSE">BSE</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input program-check" type="checkbox" value="BPA" id="progBPA">
+                                        <label class="form-check-label" for="progBPA">BPA</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input program-check" type="checkbox" value="BTVTED" id="progBTVTED">
+                                        <label class="form-check-label" for="progBTVTED">BTVTED</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input program-check" type="checkbox" value="BSMA" id="progBSMA">
+                                        <label class="form-check-label" for="progBSMA">BSMA</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Year Level</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="allYears" checked>
+                                    <label class="form-check-label" for="allYears">All Years</label>
+                                </div>
+                                <div id="yearCheckboxes" style="display: none;">
+                                    <div class="form-check">
+                                        <input class="form-check-input year-check" type="checkbox" value="1" id="year1">
+                                        <label class="form-check-label" for="year1">1st Year</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input year-check" type="checkbox" value="2" id="year2">
+                                        <label class="form-check-label" for="year2">2nd Year</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input year-check" type="checkbox" value="3" id="year3">
+                                        <label class="form-check-label" for="year3">3rd Year</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input year-check" type="checkbox" value="4" id="year4">
+                                        <label class="form-check-label" for="year4">4th Year</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Recipients:</strong> <span id="recipientCount">All students</span>
+                        </div>
+
+                                        <div id="emailStatus" class="alert d-none mb-3" role="alert"></div>
+
+                        <button type="submit" id="sendEmailBtn" class="btn btn-primary rounded-pill">
+                            <i class="bi bi-send me-2"></i>Send Email
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email History -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Emails</h5>
+                </div>
+                <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                    <div id="emailHistory">
+                        <p class="text-muted text-center">No emails sent yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const allPrograms = document.getElementById('allPrograms');
+    const allYears = document.getElementById('allYears');
+    const programCheckboxes = document.getElementById('programCheckboxes');
+    const yearCheckboxes = document.getElementById('yearCheckboxes');
+    
+    // Program selection
+    allPrograms.addEventListener('change', function() {
+        programCheckboxes.style.display = this.checked ? 'none' : 'block';
+        if (this.checked) {
+            document.querySelectorAll('.program-check').forEach(cb => cb.checked = false);
+        }
+        updateRecipientCount();
+    });
+    
+    document.querySelectorAll('.program-check').forEach(cb => {
+        cb.addEventListener('change', updateRecipientCount);
+    });
+    
+    // Year selection
+    allYears.addEventListener('change', function() {
+        yearCheckboxes.style.display = this.checked ? 'none' : 'block';
+        if (this.checked) {
+            document.querySelectorAll('.year-check').forEach(cb => cb.checked = false);
+        }
+        updateRecipientCount();
+    });
+    
+    document.querySelectorAll('.year-check').forEach(cb => {
+        cb.addEventListener('change', updateRecipientCount);
+    });
+    
+    // Form submission
+    document.getElementById('emailForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const subject  = document.getElementById('emailSubject').value.trim();
+        const message  = document.getElementById('emailMessage').value.trim();
+        const format   = document.querySelector('input[name="emailFormat"]:checked').value;
+        const programs = allPrograms.checked ? [] :
+            Array.from(document.querySelectorAll('.program-check:checked')).map(cb => cb.value);
+        const years = allYears.checked ? [] :
+            Array.from(document.querySelectorAll('.year-check:checked')).map(cb => cb.value);
+
+        if (!subject || !message) {
+            showEmailStatus('danger', 'Please fill in both Subject and Message before sending.');
+            return;
+        }
+
+        const btn = document.getElementById('sendEmailBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+        showEmailStatus('info', 'Sending emails, please wait...');
+
+        fetch('/api/email/send', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subject, message, format, programs, years })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(d => { throw new Error(d.error || `Server error ${response.status}`); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showEmailStatus('success',
+                    `Successfully sent to ${data.sent} recipient(s).`);
+                document.getElementById('emailForm').reset();
+                loadEmailHistory();
+            } else if (data.sent > 0) {
+                // Partial success
+                const errList = (data.errors || []).map(e => `${e.email}: ${e.error}`).join('<br>');
+                showEmailStatus('warning',
+                    `Sent to ${data.sent}, failed for ${data.failed}.<br>${errList}`);
+                loadEmailHistory();
+            } else {
+                const errDetail = data.error ||
+                    (data.errors || []).map(e => e.error).join(', ') ||
+                    'Unknown error';
+                showEmailStatus('danger', 'Failed to send: ' + errDetail);
+            }
+        })
+        .catch(err => {
+            showEmailStatus('danger', 'Request failed: ' + err.message);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Email';
+        });
+    });
+    
+    loadEmailHistory();
+});
+
+function updateRecipientCount() {
+    const allPrograms = document.getElementById('allPrograms').checked;
+    const allYears = document.getElementById('allYears').checked;
+    const programs = allPrograms ? [] : 
+        Array.from(document.querySelectorAll('.program-check:checked')).map(cb => cb.value);
+    const years = allYears ? [] : 
+        Array.from(document.querySelectorAll('.year-check:checked')).map(cb => cb.value);
+    
+    fetch('/api/students/count', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ programs: programs, years: years })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('recipientCount').textContent = 
+            data.count > 0 ? `${data.count} students` : 'All students';
+    });
+}
+
+function showEmailStatus(type, html) {
+    const el = document.getElementById('emailStatus');
+    el.className = `alert alert-${type}`;
+    el.innerHTML = html;
+    el.classList.remove('d-none');
+    // Auto-hide success after 8 seconds
+    if (type === 'success') {
+        setTimeout(() => { el.classList.add('d-none'); }, 8000);
+    }
+}
+
+function loadEmailHistory() {
+    fetch('/api/email/history')
+        .then(r => r.ok ? r.json() : Promise.resolve({ history: [] }))
+        .then(data => {
+            const historyDiv = document.getElementById('emailHistory');
+            if (data.history && data.history.length > 0) {
+                historyDiv.innerHTML = data.history.map(item => `
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted">${item.timestamp}</small>
+                        <p class="mb-1 small">${item.subject}</p>
+                    </div>
+                `).join('');
+            } else {
+                historyDiv.innerHTML = '<p class="text-muted text-center">No emails sent yet</p>';
+            }
+        })
+        .catch(() => {});
+}
+</script>
+{% endblock %}

@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency - TCC Announcement System{% endblock %}
+{% block page_title %}Emergency Alert System{% endblock %}
+
+{% block content %}
+<div class="alert alert-danger alert-custom">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Emergency Mode:</strong> This will override all displays and activate all speakers immediately.
+</div>
+
+<div class="row">
+    
+    <div class="col-md-6">
+        <div class="card-custom" style="border-color: #dc3545;">
+            <h3 style="color: #dc3545;">
+                <i class="bi bi-exclamation-octagon"></i> Trigger Emergency
+            </h3>
+            
+            <form id="emergencyForm">
+                <div class="mb-3">
+                    <label class="form-label">Emergency Type</label>
+                    <select class="form-select" name="type" required>
+                        <option value="">Select Emergency Type</option>
+                        <option value="fire">Fire Alarm</option>
+                        <option value="earthquake">Earthquake Drill</option>
+                        <option value="lockdown">Lockdown</option>
+                        <option value="evacuation">Evacuation</option>
+                        <option value="medical">Medical Emergency</option>
+                        <option value="general">General Emergency</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Display Text</label>
+                    <textarea class="form-control" name="text" rows="3" required></textarea>
+                    <small class="text-muted">This will be displayed on screen in large text</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Emergency Audio</label>
+                    <select class="form-select" name="audio_file">
+                        <option value="">No Audio</option>
+                        {% for file in emergency_files %}
+                        <option value="{{ file.file_path }}">{{ file.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <small>
+                        <i class="bi bi-info-circle"></i>
+                        When triggered:
+                        <ul class="mb-0 mt-2">
+                            <li>All speakers will activate automatically</li>
+                            <li>Display will override current content</li>
+                            <li>Red flashing alert screen</li>
+                            <li>Cannot be scheduled (manual only)</li>
+                        </ul>
+                    </small>
+                </div>
+                
+                <button type="button" class="btn btn-danger w-100 btn-lg" onclick="triggerEmergency()">
+                    <i class="bi bi-exclamation-triangle-fill"></i> TRIGGER EMERGENCY
+                </button>
+            </form>
+            
+            <hr>
+            
+            <button type="button" class="btn btn-success w-100" onclick="stopEmergency()">
+                <i class="bi bi-check-circle"></i> Stop Emergency Alert
+            </button>
+        </div>
+    </div>
+    
+    
+    <div class="col-md-6">
+        <div class="card-custom">
+            <h3><i class="bi bi-folder-open"></i> Emergency Audio Files</h3>
+            
+            <div class="mb-3">
+                <button class="btn btn-maroon" data-bs-toggle="modal" data-bs-target="#uploadEmergencyModal">
+                    <i class="bi bi-upload"></i> Upload Emergency Audio
+                </button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Uploaded</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for file in emergency_files %}
+                        <tr id="emg-row-{{ file.id }}">
+                            <td>{{ file.name }}</td>
+                            <td><span class="badge bg-danger">{{ file.type }}</span></td>
+                            <td>{{ file.uploaded_at[:10] }}</td>
+                            <td class="text-nowrap">
+                                
+                                <button class="btn btn-sm btn-primary btn-test"
+                                        id="btn-test-{{ file.id }}"
+                                        data-file-id="{{ file.id }}"
+                                        data-file-path="{{ file.file_path }}"
+                                        onclick="handleTestClick(this)">
+                                    <i class="bi bi-play-fill"></i> Test
+                                </button>
+                                
+                                <button class="btn btn-sm btn-warning btn-stop-test d-none"
+                                        id="btn-stop-test-{{ file.id }}"
+                                        data-file-id="{{ file.id }}"
+                                        onclick="handleStopTestClick(this)">
+                                    <i class="bi bi-stop-fill"></i> Stop Test
+                                </button>
+                                <button class="btn btn-sm btn-danger"
+                                        data-file-id="{{ file.id }}"
+                                        onclick="handleDeleteEmergencyClick(this)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        
+        <div class="card-custom mt-3">
+            <h3><i class="bi bi-list-check"></i> Emergency Procedures</h3>
+            
+            <div class="accordion" id="proceduresAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fire">
+                            <i class="bi bi-fire text-danger me-2"></i> Fire Emergency
+                        </button>
+                    </h2>
+                    <div id="fire" class="accordion-collapse collapse" data-bs-parent="#proceduresAccordion">
+                        <div class="accordion-body">
+                            <ol>
+                                <li>Trigger fire alarm emergency</li>
+                                <li>Alert: FIRE DRILL IN PROGRESS - EVACUATE IMMEDIATELY</li>
+                                <li>Monitor evacuation via cameras</li>
+                                <li>Stop alert when drill complete</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#earthquake">
+                            <i class="bi bi-exclamation-triangle text-warning me-2"></i> Earthquake
+                        </button>
+                    </h2>
+                    <div id="earthquake" class="accordion-collapse collapse" data-bs-parent="#proceduresAccordion">
+                        <div class="accordion-body">
+                            <ol>
+                                <li>Trigger earthquake emergency</li>
+                                <li>Alert: EARTHQUAKE - DROP, COVER, HOLD ON</li>
+                                <li>Wait for shaking to stop</li>
+                                <li>Proceed to evacuation if necessary</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#lockdown">
+                            <i class="bi bi-lock text-danger me-2"></i> Lockdown
+                        </button>
+                    </h2>
+                    <div id="lockdown" class="accordion-collapse collapse" data-bs-parent="#proceduresAccordion">
+                        <div class="accordion-body">
+                            <ol>
+                                <li>Trigger lockdown emergency</li>
+                                <li>Alert: LOCKDOWN - SECURE ALL DOORS AND STAY INSIDE</li>
+                                <li>Contact security and authorities</li>
+                                <li>Stop when all-clear given</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Emergency Audio Modal -->
+<div class="modal fade" id="uploadEmergencyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #dc3545; color: white;">
+                <h5 class="modal-title">Upload Emergency Audio</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadEmergencyForm">
+                    <div class="mb-3">
+                        <label class="form-label">File Name</label>
+                        <input type="text" class="form-control" name="name" placeholder="e.g., Fire Alarm Siren" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Emergency Type</label>
+                        <select class="form-select" name="type" required>
+                            <option value="fire">Fire</option>
+                            <option value="earthquake">Earthquake</option>
+                            <option value="lockdown">Lockdown</option>
+                            <option value="evacuation">Evacuation</option>
+                            <option value="medical">Medical</option>
+                            <option value="general">General</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Audio File (MP3)</label>
+                        <input type="file" class="form-control" name="file" accept=".mp3" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="submitUploadEmergency()">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function triggerEmergency() {
+    const formData = new FormData(document.getElementById('emergencyForm'));
+    const data = {
+        type: formData.get('type'),
+        text: formData.get('text'),
+        audio_file: formData.get('audio_file')
+    };
+    if (!data.type || !data.text) {
+        tccAlert('Please fill in all required fields.', 'warning');
+        return;
+    }
+    tccConfirm(
+        'This will OVERRIDE all displays and activate ALL speakers immediately. Are you sure?',
+        'Trigger Emergency Alert',
+        () => {
+            fetch('/emergency', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(result => {
+                if (!result.success) tccAlert('Error: ' + result.error, 'danger');
+            });
+        },
+        'Trigger Alert'
+    );
+}
+
+function stopEmergency() {
+    tccConfirm(
+        'Stop the emergency alert and return to idle display? All speakers will be silenced.',
+        'Stop Emergency',
+        () => {
+            fetch('/emergency/stop', {method: 'POST'})
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) location.reload();
+                else tccAlert('Error: ' + result.error, 'danger');
+            })
+            .catch(err => tccAlert('Error: ' + err.message, 'danger'));
+        },
+        'Stop Emergency'
+    );
+}
+
+
+function handleTestClick(btn) {
+    testEmergencyAudio(btn.dataset.filePath, btn.dataset.fileId);
+}
+function handleStopTestClick(btn) {
+    stopTestAudio(btn.dataset.fileId);
+}
+function handleDeleteEmergencyClick(btn) {
+    deleteEmergencyFile(btn.dataset.fileId);
+}
+
+
+let _testingFileId = null;
+
+function testEmergencyAudio(filepath, fileId) {
+    fetch('/emergency/test', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({file: filepath})
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            _setTestingUI(fileId, true);
+        } else {
+            tccAlert('Error: ' + result.error, 'danger');
+        }
+    })
+    .catch(err => tccAlert('Error: ' + err.message, 'danger'));
+}
+
+function stopTestAudio(fileId) {
+    fetch('/emergency/test/stop', {method: 'POST'})
+    .then(r => r.json())
+    .then(result => {
+        _setTestingUI(fileId, false);
+        if (!result.success) tccAlert('Error: ' + result.error, 'danger');
+    })
+    .catch(err => tccAlert('Error: ' + err.message, 'danger'));
+}
+
+function _setTestingUI(fileId, isTesting) {
+    // Reset any previously testing row first
+    if (_testingFileId && _testingFileId !== fileId) {
+        const prev = _testingFileId;
+        document.getElementById('btn-test-' + prev)?.classList.remove('d-none');
+        document.getElementById('btn-stop-test-' + prev)?.classList.add('d-none');
+    }
+    const testBtn     = document.getElementById('btn-test-' + fileId);
+    const stopTestBtn = document.getElementById('btn-stop-test-' + fileId);
+    if (!testBtn || !stopTestBtn) return;
+    if (isTesting) {
+        testBtn.classList.add('d-none');
+        stopTestBtn.classList.remove('d-none');
+        _testingFileId = fileId;
+    } else {
+        testBtn.classList.remove('d-none');
+        stopTestBtn.classList.add('d-none');
+        _testingFileId = null;
+    }
+}
+
+function submitUploadEmergency() {
+    const form = document.getElementById('uploadEmergencyForm');
+    const btn  = document.querySelector('#uploadEmergencyModal .btn-danger');
+
+    // Basic validation
+    const name = form.querySelector('[name="name"]').value.trim();
+    const file = form.querySelector('[name="file"]').files[0];
+    if (!name) { tccAlert('Please enter a file name.', 'warning'); return; }
+    if (!file)  { tccAlert('Please select an audio file.', 'warning'); return; }
+
+    const formData = new FormData(form);
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Uploading…';
+
+    fetch('/emergency/upload', {method: 'POST', body: formData})
+    .then(r => r.json())
+    .then(result => {
+        btn.disabled = false;
+        btn.innerHTML = 'Upload';
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('uploadEmergencyModal')).hide();
+            form.reset();
+            location.reload();
+        } else {
+            tccAlert('Upload failed: ' + result.error, 'danger');
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = 'Upload';
+        tccAlert('Upload error: ' + err.message, 'danger');
+    });
+}
+
+function deleteEmergencyFile(id) {
+    tccConfirm(
+        'Delete this emergency audio file permanently?',
+        'Delete File',
+        () => {
+            fetch('/emergency/delete/' + id, {method: 'DELETE'})
+            .then(r => r.json())
+            .then(result => { if (result.success) location.reload(); });
+        },
+        'Delete'
+    );
+}
+</script>
+{% endblock %}

@@ -1,0 +1,836 @@
+{% extends "base.html" %}
+
+{% block title %}Announcements - TCC Announcement System{% endblock %}
+{% block page_title %}Announcements{% endblock %}
+
+{% block content %}
+
+<!-- Live Display State Banner -->
+<div id="displayStateBanner" class="alert mb-3 d-flex align-items-center justify-content-between"
+     style="border-left: 5px solid #800000; background:#fff8f8; display:none!important;">
+    <div>
+        <strong><i class="bi bi-display me-2"></i>Display is currently showing:</strong>
+        <span id="bannerMode" class="badge bg-primary ms-1"></span>
+        <span id="bannerContent" class="ms-2 text-muted small"></span>
+    </div>
+    <div id="bannerTimer" class="text-danger fw-bold small ms-3" style="white-space:nowrap;"></div>
+</div>
+
+<!-- Idle Display Mode Control -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3><i class="bi bi-gear"></i> Idle Display Mode</h3>
+                <button type="button" class="btn btn-success" onclick="triggerIdle()">
+                    <i class="bi bi-arrow-clockwise"></i> Trigger Idle Now
+                </button>
+            </div>
+            <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="idleMode" id="idleWelcome" value="welcome" checked>
+                <label class="btn btn-outline-maroon" for="idleWelcome" onclick="setIdleMode('welcome')">
+                    <i class="bi bi-house-door"></i> Welcome Screen
+                    <br><small>Logo + Time + Date</small>
+                </label>
+                
+                <input type="radio" class="btn-check" name="idleMode" id="idleSlideshow" value="slideshow">
+                <label class="btn btn-outline-maroon" for="idleSlideshow" onclick="setIdleMode('slideshow')">
+                    <i class="bi bi-images"></i> Image Slideshow
+                    <br><small>Rotate uploaded images</small>
+                </label>
+                
+                <input type="radio" class="btn-check" name="idleMode" id="idleVideo" value="video">
+                <label class="btn btn-outline-maroon" for="idleVideo" onclick="setIdleMode('video')">
+                    <i class="bi bi-film"></i> Video Loop
+                    <br><small>Play MP4 videos</small>
+                </label>
+            </div>
+            <div class="mt-3 text-muted">
+                <small>
+                    <strong>Welcome Screen:</strong> Default TCC screen with logo, time, and date<br>
+                    <strong>Slideshow:</strong> Cycles through images in media/idle folder<br>
+                    <strong>Video Loop:</strong> Plays MP4 videos from media/idle folder in loop
+                </small>
+            </div>
+            
+            
+            <div class="mt-3 pt-3 border-top">
+                <button type="button" class="btn btn-danger w-100" onclick="stopAnnouncement()">
+                    <i class="bi bi-stop-circle"></i> Stop Current Announcement
+                </button>
+                <small class="text-muted d-block mt-2">
+                    Immediately stop any playing announcement and return to idle display
+                </small>
+            </div>
+            
+            
+            <div class="mt-3 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong><i class="bi bi-volume-up"></i> Idle Speakers</strong>
+                        <br>
+                        <small class="text-muted">Enable audio during idle video playback</small>
+                    </div>
+                    <div class="form-check form-switch" style="font-size: 1.5rem;">
+                        <input class="form-check-input" type="checkbox" id="idleSpeakersToggle" onchange="toggleIdleSpeakers()">
+                        <label class="form-check-label" for="idleSpeakersToggle"></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Text Display -->
+    <div class="col-md-6">
+        <div class="card-custom">
+            <h3><i class="bi bi-type"></i> Text Display</h3>
+            <form id="textDisplayForm">
+                <div class="mb-3">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-control" name="text" rows="4" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Font Size</label>
+                    <input type="range" class="form-range" name="font_size" min="24" max="96" value="48" 
+                           oninput="document.getElementById('fontSize').textContent = this.value">
+                    <small>Size: <span id="fontSize">48</span>px</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Background Color</label>
+                    <input type="color" class="form-control" name="bg_color" value="#000000">
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-maroon" onclick="displayText()">
+                        <i class="bi bi-display"></i> Display Text
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="stopAnnouncement()">
+                        <i class="bi bi-stop-circle"></i> Stop Text Display
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Audio Announcement -->
+    <div class="col-md-6">
+        <div class="card-custom">
+            <h3><i class="bi bi-music-note-beamed"></i> Audio Announcement</h3>
+            
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#uploadAudio">
+                        Upload MP3
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#textToSpeech">
+                        Text-to-Speech
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#recordAudio">
+                        Record
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#liveAudio">
+                        Live
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content">
+                
+                <div class="tab-pane fade show active" id="uploadAudio">
+                    <form id="uploadAudioForm">
+                        <div class="mb-3">
+                            <input type="file" class="form-control" name="file" accept=".mp3,.wav" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Select Speakers</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="speakers[]" value="1" checked>
+                                <label class="form-check-label">Speaker 1</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="speakers[]" value="2" checked>
+                                <label class="form-check-label">Speaker 2</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="speakers[]" value="3" checked>
+                                <label class="form-check-label">Speaker 3</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="speakers[]" value="4" checked>
+                                <label class="form-check-label">Speaker 4</label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-maroon w-100" onclick="playAudio()">
+                            <i class="bi bi-play-circle"></i> Play Audio
+                        </button>
+                    </form>
+                </div>
+                
+                
+                <div class="tab-pane fade" id="textToSpeech">
+                    <form id="ttsForm">
+                        <div class="mb-3">
+                            <label class="form-label">Text to Speak</label>
+                            <textarea class="form-control" name="tts_text" rows="4" required 
+                                      placeholder="Enter the text you want to convert to speech..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Select Speakers</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tts_speakers[]" value="1" checked>
+                                <label class="form-check-label">Speaker 1</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tts_speakers[]" value="2" checked>
+                                <label class="form-check-label">Speaker 2</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tts_speakers[]" value="3" checked>
+                                <label class="form-check-label">Speaker 3</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tts_speakers[]" value="4" checked>
+                                <label class="form-check-label">Speaker 4</label>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-maroon w-100" onclick="playTTS()">
+                            <i class="bi bi-volume-up"></i> Generate & Play Speech
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Record Audio -->
+                <div class="tab-pane fade" id="recordAudio">
+                    
+                    <div id="recStatusBar" class="alert alert-secondary d-flex align-items-center gap-2 py-2 mb-3" style="display:none!important;">
+                        <span id="recDot" style="width:12px;height:12px;border-radius:50%;background:#dc3545;display:inline-block;"></span>
+                        <strong>Recording</strong>
+                        <span id="recCountdown" class="ms-auto font-monospace fw-bold text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Recording Duration (seconds)</label>
+                        <input type="number" class="form-control" id="recDuration" value="30" min="5" max="300">
+                    </div>
+
+                    <div class="d-grid gap-2 mb-3">
+                        <button type="button" class="btn btn-danger" id="recordBtn" onclick="startRecording()">
+                            <i class="bi bi-record-circle"></i> Start Recording
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="stopRecBtn" onclick="stopRecording()" disabled>
+                            <i class="bi bi-stop-fill"></i> Stop Recording
+                        </button>
+                    </div>
+
+                    <small class="text-muted">Recordings are saved as MP3 in media/recorded/</small>
+
+                    
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong><i class="bi bi-folder2-open"></i> Recorded Files</strong>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadRecordings()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        <div id="recordingsList" class="list-group" style="max-height:200px;overflow-y:auto;">
+                            <div class="list-group-item text-muted small">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Audio -->
+                <div class="tab-pane fade" id="liveAudio">
+                    
+                    <div id="liveStatusBar" class="alert alert-secondary d-flex align-items-center gap-2 py-2 mb-3">
+                        <span id="liveDot" style="width:12px;height:12px;border-radius:50%;background:#6c757d;display:inline-block;transition:background .3s;"></span>
+                        <span id="liveStatusText" class="text-muted">Mic inactive</span>
+                        <span id="liveTimer" class="ms-auto font-monospace fw-bold text-success" style="display:none;"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Select Speakers</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="live_speakers[]" value="1" checked>
+                            <label class="form-check-label">Speaker 1</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="live_speakers[]" value="2" checked>
+                            <label class="form-check-label">Speaker 2</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="live_speakers[]" value="3" checked>
+                            <label class="form-check-label">Speaker 3</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="live_speakers[]" value="4" checked>
+                            <label class="form-check-label">Speaker 4</label>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success" id="liveStartBtn" onclick="startLive()">
+                            <i class="bi bi-mic"></i> Start Live Audio
+                        </button>
+                        <button type="button" class="btn btn-danger" id="liveStopBtn" onclick="stopLive()" disabled>
+                            <i class="bi bi-stop-circle"></i> Stop Live Audio
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Video Display -->
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="card-custom">
+            <h3><i class="bi bi-film"></i> Video Display</h3>
+            <form id="videoDisplayForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Upload Video (MP4)</label>
+                            <input type="file" class="form-control" name="file" accept=".mp4" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Audio Options</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="with_audio" value="true" checked>
+                                <label class="form-check-label">With Audio</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="with_audio" value="false">
+                                <label class="form-check-label">Without Audio</label>
+                            </div>
+                        </div>
+                        <div class="mb-3" id="videoSpeakers">
+                            <label class="form-label">Select Speakers</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="video_speakers[]" value="1" checked>
+                                <label class="form-check-label">Speaker 1</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="video_speakers[]" value="2" checked>
+                                <label class="form-check-label">Speaker 2</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="video_speakers[]" value="3" checked>
+                                <label class="form-check-label">Speaker 3</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="video_speakers[]" value="4" checked>
+                                <label class="form-check-label">Speaker 4</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="button" class="btn btn-maroon flex-fill" onclick="playVideo()">
+                        <i class="bi bi-play-circle"></i> Play Video
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="stopAnnouncement()">
+                        <i class="bi bi-stop-circle"></i> Stop Video
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ---- Live display-state polling ---- */
+let _revertAt      = null;
+let _lastUpdatedAt = '';
+
+function pollDisplayState() {
+    fetch('/api/display/state')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (!data) return;
+            const banner  = document.getElementById('displayStateBanner');
+            const modeEl  = document.getElementById('bannerMode');
+            const contEl  = document.getElementById('bannerContent');
+            const timerEl = document.getElementById('bannerTimer');
+
+            if (data.mode === 'idle') {
+                banner.style.setProperty('display', 'none', 'important');
+                _revertAt = null;
+                timerEl.textContent = '';
+                return;
+            }
+
+            banner.style.removeProperty('display');
+            banner.style.display = 'flex';
+
+            const modeColors = {
+                text: 'bg-primary', video: 'bg-success',
+                audio: 'bg-warning text-dark', tts: 'bg-info text-dark',
+                emergency: 'bg-danger'
+            };
+            modeEl.className  = 'badge ms-1 ' + (modeColors[data.mode] || 'bg-secondary');
+            modeEl.textContent = data.mode.toUpperCase();
+            const preview = data.content
+                ? data.content.substring(0, 80) + (data.content.length > 80 ? '…' : '') : '';
+            contEl.textContent = preview;
+
+            if (data.updated_at !== _lastUpdatedAt) {
+                _lastUpdatedAt = data.updated_at;
+                _revertAt = null;
+            }
+        })
+        .catch(() => {});
+}
+
+function tickCountdown() {
+    const timerEl = document.getElementById('bannerTimer');
+    if (!_revertAt) { timerEl.textContent = ''; return; }
+    const remaining = Math.ceil((_revertAt - Date.now()) / 1000);
+    if (remaining <= 0) {
+        timerEl.textContent = 'Reverting to idle…';
+        _revertAt = null;
+    } else {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        timerEl.textContent = `Returns to idle in ${m > 0 ? m + 'm ' : ''}${s}s`;
+    }
+}
+
+// Restore revertAt from sessionStorage if set by schedule trigger
+const _storedRevertAt = sessionStorage.getItem('revertAt');
+if (_storedRevertAt) {
+    _revertAt = parseInt(_storedRevertAt);
+    sessionStorage.removeItem('revertAt');
+}
+
+pollDisplayState();
+setInterval(pollDisplayState, 2000);
+setInterval(tickCountdown, 1000);
+</script>
+<script>
+function setIdleMode(mode) {
+    fetch('/idle/set-mode', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({mode: mode})
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            tccAlert('Idle mode set to: ' + mode, 'success');
+        } else {
+            tccAlert('Error: ' + result.error, 'danger');
+        }
+    });
+}
+
+function toggleIdleSpeakers() {
+    const enabled = document.getElementById('idleSpeakersToggle').checked;
+    fetch('/idle/toggle-speakers', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled: enabled})
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (!result.success) tccAlert('Error: ' + result.error, 'danger');
+    });
+}
+
+function triggerIdle() {
+    tccConfirm(
+        'Switch to idle display now? The current announcement will stop.',
+        'Switch to Idle',
+        () => {
+            fetch('/trigger/idle', { method: 'POST', headers: {'Content-Type': 'application/json'} })
+            .then(r => r.json())
+            .then(result => {
+                if (!result.success) tccAlert('Error: ' + result.error, 'danger');
+            });
+        },
+        'Switch'
+    );
+}
+
+function playTTS() {
+    const form = document.getElementById('ttsForm');
+    const text = form.querySelector('[name="tts_text"]').value;
+    const speakers = Array.from(form.querySelectorAll('[name="tts_speakers[]"]:checked'))
+                          .map(cb => parseInt(cb.value));
+    
+    if (!text.trim()) {
+        tccAlert('Please enter text to convert to speech.', 'warning');
+        return;
+    }
+    if (speakers.length === 0) {
+        tccAlert('Please select at least one speaker.', 'warning');
+        return;
+    }
+    
+    fetch('/announce/tts', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            text: text,
+            speakers: speakers
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Create download link
+            const downloadLink = document.createElement('a');
+            downloadLink.href = result.download_url;
+            downloadLink.download = result.filename;
+            downloadLink.textContent = 'Download MP3';
+            downloadLink.className = 'btn btn-sm btn-success mt-2';
+            downloadLink.target = '_blank';
+            
+            // Show success message with download button
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+            messageDiv.innerHTML = `
+                <strong>Success!</strong> Text-to-speech generated and playing!
+                <br>
+                <a href="${result.download_url}" download="${result.filename}" class="btn btn-sm btn-success mt-2">
+                    <i class="bi bi-download"></i> Download MP3
+                </a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert message after form
+            form.parentNode.insertBefore(messageDiv, form.nextSibling);
+            
+            // Auto-dismiss after 10 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 10000);
+        } else {
+            tccAlert('Error: ' + (result.error || 'Failed to generate speech'), 'danger');
+        }
+    })
+    .catch(error => tccAlert('Error: ' + error.message, 'danger'));
+}
+
+function stopAnnouncement() {
+    tccConfirm(
+        'Stop the current announcement and return to idle display?',
+        'Stop Announcement',
+        () => {
+            fetch('/announce/stop', { method: 'POST', headers: {'Content-Type': 'application/json'} })
+            .then(r => r.json())
+            .then(result => {
+                if (!result.success)
+                    tccAlert('Error: ' + (result.error || 'Failed to stop announcement'), 'danger');
+            })
+            .catch(error => tccAlert('Error: ' + error.message, 'danger'));
+        },
+        'Stop'
+    );
+}
+
+function displayText() {
+    const formData = new FormData(document.getElementById('textDisplayForm'));
+    const data = {
+        text: formData.get('text'),
+        font_size: parseInt(formData.get('font_size')),
+        bg_color: formData.get('bg_color')
+    };
+    fetch('/announce/text', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success) tccAlert('Error: ' + result.error, 'danger');
+    });
+}
+
+function playAudio() {
+    const formData = new FormData(document.getElementById('uploadAudioForm'));
+    fetch('/announce/audio', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success) tccAlert('Error: ' + result.error, 'danger');
+    });
+}
+
+function playVideo() {
+    const form = document.getElementById('videoDisplayForm');
+    const btn  = form.querySelector('button[onclick="playVideo()"]');
+    const formData = new FormData(form);
+
+    // Debug: log what speakers are being sent
+    const spks = formData.getAll('video_speakers[]');
+    const audio = formData.get('with_audio');
+    console.log('[video] sending video_speakers[]:', spks, 'with_audio:', audio);
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Uploading…'; }
+
+    fetch('/announce/video', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(result => {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-play-circle"></i> Play Video'; }
+        if (!result.success) tccAlert('Error: ' + result.error, 'danger');
+    })
+    .catch(err => {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-play-circle"></i> Play Video'; }
+        tccAlert('Error: ' + err.message, 'danger');
+    });
+}
+
+
+let _recPollInterval = null;
+let _recBlinkInterval = null;
+let _liveTimerInterval = null;
+let _liveSeconds = 0;
+
+function startRecording() {
+    const duration = parseInt(document.getElementById('recDuration').value) || 30;
+
+    fetch('/announce/record/start', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ duration, speakers: [] }),
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success) {
+            tccAlert('Error: ' + (result.error || 'Failed to start recording'), 'danger');
+            return;
+        }
+        _setRecordingUI(true, duration);
+        // Poll status every 500ms for snappy countdown/finish detection
+        _recPollInterval = setInterval(_pollRecordStatus, 500);
+    })
+    .catch(err => tccAlert('Error: ' + err.message, 'danger'));
+}
+
+function stopRecording() {
+    clearInterval(_recPollInterval);
+    clearInterval(_recBlinkInterval);
+    fetch('/announce/record/stop', { method: 'POST' })
+    .then(() => {
+        // Poll quickly — file should be ready within ~300ms after stop
+        setTimeout(_pollRecordStatus, 300);
+        _setRecordingUI(false);
+    })
+    .catch(err => tccAlert('Error: ' + err.message, 'danger'));
+}
+
+function _setRecordingUI(active, duration) {
+    const btn     = document.getElementById('recordBtn');
+    const stopBtn = document.getElementById('stopRecBtn');
+    const bar     = document.getElementById('recStatusBar');
+    const dot     = document.getElementById('recDot');
+
+    btn.disabled     = active;
+    stopBtn.disabled = !active;
+
+    if (active) {
+        bar.style.removeProperty('display');
+        bar.classList.remove('alert-secondary', 'alert-success');
+        bar.classList.add('alert-danger');
+        // Blink dot
+        _recBlinkInterval = setInterval(() => {
+            dot.style.opacity = dot.style.opacity === '0' ? '1' : '0';
+        }, 500);
+    } else {
+        clearInterval(_recBlinkInterval);
+        clearInterval(_recPollInterval);
+        dot.style.opacity = '1';
+        bar.classList.remove('alert-danger');
+        bar.classList.add('alert-success');
+        document.getElementById('recCountdown').textContent = '';
+    }
+}
+
+function _pollRecordStatus() {
+    fetch('/announce/record/status')
+    .then(r => r.json())
+    .then(data => {
+        const countdown = document.getElementById('recCountdown');
+        if (data.active) {
+            const rem = data.remaining || 0;
+            const m = String(Math.floor(rem / 60)).padStart(2, '0');
+            const s = String(rem % 60).padStart(2, '0');
+            countdown.textContent = `${m}:${s} remaining`;
+        } else {
+            // Recording finished
+            clearInterval(_recPollInterval);
+            clearInterval(_recBlinkInterval);
+            _setRecordingUI(false);
+            document.getElementById('recStatusBar').style.removeProperty('display');
+            const bar = document.getElementById('recStatusBar');
+            bar.classList.remove('alert-danger');
+            bar.classList.add('alert-success');
+            if (data.last_file) {
+                document.getElementById('recCountdown').innerHTML =
+                    `<a href="${data.last_file_url}" class="text-success fw-bold">
+                        <i class="bi bi-check-circle"></i> Saved: ${data.last_file}
+                     </a>`;
+            } else {
+                document.getElementById('recCountdown').textContent = 'Saved!';
+            }
+            loadRecordings();
+        }
+    })
+    .catch(() => {});
+}
+
+function loadRecordings() {
+    fetch('/announce/record/list')
+    .then(r => r.json())
+    .then(data => {
+        const list = document.getElementById('recordingsList');
+        if (!data.files || data.files.length === 0) {
+            list.innerHTML = '<div class="list-group-item text-muted small">No recordings yet.</div>';
+            return;
+        }
+        list.innerHTML = data.files.map(f => `
+            <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2">
+                <div>
+                    <i class="bi bi-file-earmark-music text-maroon me-2"></i>
+                    <span class="small fw-semibold">${f.name}</span>
+                    <span class="text-muted small ms-2">${f.size}</span>
+                </div>
+                <div class="d-flex gap-1">
+                    <audio controls src="${f.url}" class="d-none" id="aud_${f.name}"></audio>
+                    <button class="btn btn-sm btn-outline-maroon" onclick="playRecording('${f.url}','${f.name}')">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+                    <a href="${f.url}" download class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-download"></i>
+                    </a>
+                </div>
+            </div>`).join('');
+    })
+    .catch(() => {});
+}
+
+function playRecording(url, name) {
+    // Play the recording via the announce/audio endpoint (sends to speakers)
+    fetch('/announce/audio/url', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ url, speakers: [1,2,3,4] }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (!d.success) {
+            // Fallback: play in browser
+            const aud = document.getElementById('aud_' + name);
+            if (aud) { aud.classList.remove('d-none'); aud.play(); }
+        }
+    })
+    .catch(() => {
+        const aud = document.getElementById('aud_' + name);
+        if (aud) { aud.classList.remove('d-none'); aud.play(); }
+    });
+}
+
+// Load recordings list on tab click
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('[data-bs-target="#recordAudio"]')?.addEventListener('shown.bs.tab', loadRecordings);
+    loadRecordings();
+});
+
+/* ================================================================
+   LIVE AUDIO
+   ================================================================ */
+let _liveActive = false;
+
+function startLive() {
+    if (_liveActive) return;
+
+    const speakers = Array.from(document.querySelectorAll('[name="live_speakers[]"]:checked'))
+                         .map(cb => parseInt(cb.value));
+
+    fetch('/announce/live/start', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ speakers }),
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success) {
+            tccAlert('Error: ' + (result.error || 'Failed to start live audio'), 'danger');
+            return;
+        }
+        _liveActive = true;
+        _liveSeconds = 0;
+        _setLiveUI(true);
+        _liveTimerInterval = setInterval(() => {
+            _liveSeconds++;
+            const m = String(Math.floor(_liveSeconds / 60)).padStart(2,'0');
+            const s = String(_liveSeconds % 60).padStart(2,'0');
+            document.getElementById('liveTimer').textContent = `${m}:${s}`;
+        }, 1000);
+    })
+    .catch(err => tccAlert('Error: ' + err.message, 'danger'));
+}
+
+function stopLive() {
+    fetch('/announce/live/stop', { method: 'POST' })
+    .then(r => r.json())
+    .then(() => {
+        clearInterval(_liveTimerInterval);
+        _liveActive  = false;
+        _liveSeconds = 0;
+        _setLiveUI(false);
+    })
+    .catch(err => tccAlert('Error: ' + err.message, 'danger'));
+}
+
+function _setLiveUI(active) {
+    const dot        = document.getElementById('liveDot');
+    const statusText = document.getElementById('liveStatusText');
+    const timer      = document.getElementById('liveTimer');
+    const startBtn   = document.getElementById('liveStartBtn');
+    const stopBtn    = document.getElementById('liveStopBtn');
+    const bar        = document.getElementById('liveStatusBar');
+
+    startBtn.disabled = active;
+    stopBtn.disabled  = !active;
+
+    if (active) {
+        dot.style.background = '#dc3545';
+        dot.style.animation  = 'pulse 1s infinite';
+        statusText.textContent = 'LIVE — microphone active';
+        statusText.className   = 'text-danger fw-bold';
+        timer.style.display    = 'inline';
+        bar.classList.remove('alert-secondary');
+        bar.classList.add('alert-danger');
+    } else {
+        dot.style.background = '#6c757d';
+        dot.style.animation  = 'none';
+        statusText.textContent = 'Mic inactive';
+        statusText.className   = 'text-muted';
+        timer.style.display    = 'none';
+        timer.textContent      = '00:00';
+        bar.classList.remove('alert-danger');
+        bar.classList.add('alert-secondary');
+    }
+}
+
+
+const _liveStyle = document.createElement('style');
+_liveStyle.textContent = `
+@keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.4;transform:scale(1.4)}
+}`;
+document.head.appendChild(_liveStyle);
+</script>
+{% endblock %}

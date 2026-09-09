@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}SMS Announcements - TCC Display System{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">SMS Announcements</h2>
+
+    <div class="row g-4">
+        <!-- Send SMS Form -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Send SMS Message</h5>
+                </div>
+                <div class="card-body">
+                    <form id="smsForm">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Message Content</label>
+                            <textarea class="form-control" id="smsMessage" rows="4"
+                                      maxlength="160" required
+                                      placeholder="Type your announcement here…"></textarea>
+                            <small class="text-muted">Characters: <span id="charCount">0</span>/160</small>
+                        </div>
+
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Department / Program</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="checkbox" id="allPrograms" checked>
+                                    <label class="form-check-label fw-semibold" for="allPrograms">All Programs</label>
+                                </div>
+                            </div>
+                            <div id="programCheckboxes" class="d-flex flex-wrap gap-3 mt-2" style="display:none!important;">
+                                {% for prog in ['BSCPE','BSE','BPA','BTVTED','BSMA'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input program-check" type="checkbox"
+                                           value="{{ prog }}" id="prog{{ prog }}">
+                                    <label class="form-check-label" for="prog{{ prog }}">{{ prog }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Year Level</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="checkbox" id="allYears" checked>
+                                    <label class="form-check-label fw-semibold" for="allYears">All Years</label>
+                                </div>
+                            </div>
+                            <div id="yearCheckboxes" class="d-flex flex-wrap gap-3 mt-2" style="display:none!important;">
+                                {% for y, label in [('1','1st Year'),('2','2nd Year'),('3','3rd Year'),('4','4th Year')] %}
+                                <div class="form-check">
+                                    <input class="form-check-input year-check" type="checkbox"
+                                           value="{{ y }}" id="year{{ y }}">
+                                    <label class="form-check-label" for="year{{ y }}">{{ label }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Target: Section -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Section</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="checkbox" id="allSections" checked>
+                                    <label class="form-check-label fw-semibold" for="allSections">All Sections</label>
+                                </div>
+                            </div>
+                            <div id="sectionInputWrap" class="mt-2" style="display:none;">
+                                <input type="text" class="form-control" id="sectionInput"
+                                       placeholder="Comma-separated sections, e.g. A, B, C"
+                                       style="max-width: 320px;">
+                                <small class="text-muted">Enter section labels separated by commas.</small>
+                            </div>
+                        </div>
+
+                        
+                        <div class="alert alert-info py-2">
+                            <i class="bi bi-people me-2"></i>
+                            <strong>Estimated recipients:</strong>
+                            <span id="recipientCount">—</span>
+                            <span class="text-muted small ms-1">(students with phone numbers)</span>
+                        </div>
+
+                        
+                        <div id="smsAlert" class="alert d-none mb-3"></div>
+
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="bi bi-send me-2"></i>Send SMS
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMS History -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100" style="border: 2px solid #800000 !important;">
+                <div class="card-header text-white" style="background-color: #800000;">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent SMS</h5>
+                </div>
+                <div class="card-body" style="max-height: 560px; overflow-y: auto;">
+                    <div id="smsHistory">
+                        <p class="text-muted text-center small">No SMS sent yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const messageInput   = document.getElementById('smsMessage');
+    const charCount      = document.getElementById('charCount');
+    const allPrograms    = document.getElementById('allPrograms');
+    const allYears       = document.getElementById('allYears');
+    const allSections    = document.getElementById('allSections');
+    const programBoxes   = document.getElementById('programCheckboxes');
+    const yearBoxes      = document.getElementById('yearCheckboxes');
+    const sectionWrap    = document.getElementById('sectionInputWrap');
+    const sectionInput   = document.getElementById('sectionInput');
+
+    // Character counter
+    messageInput.addEventListener('input', function () {
+        charCount.textContent = this.value.length;
+        scheduleCountUpdate();
+    });
+
+    // Program toggle
+    allPrograms.addEventListener('change', function () {
+        programBoxes.style.display = this.checked ? 'none' : 'flex';
+        if (this.checked) document.querySelectorAll('.program-check').forEach(c => c.checked = false);
+        scheduleCountUpdate();
+    });
+    document.querySelectorAll('.program-check').forEach(c => c.addEventListener('change', scheduleCountUpdate));
+
+    // Year toggle
+    allYears.addEventListener('change', function () {
+        yearBoxes.style.display = this.checked ? 'none' : 'flex';
+        if (this.checked) document.querySelectorAll('.year-check').forEach(c => c.checked = false);
+        scheduleCountUpdate();
+    });
+    document.querySelectorAll('.year-check').forEach(c => c.addEventListener('change', scheduleCountUpdate));
+
+    // Section toggle
+    allSections.addEventListener('change', function () {
+        sectionWrap.style.display = this.checked ? 'none' : 'block';
+        if (this.checked) sectionInput.value = '';
+        scheduleCountUpdate();
+    });
+    sectionInput.addEventListener('input', scheduleCountUpdate);
+
+    // Form submit
+    document.getElementById('smsForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const message  = messageInput.value.trim();
+        const programs = allPrograms.checked ? [] :
+            Array.from(document.querySelectorAll('.program-check:checked')).map(c => c.value);
+        const years    = allYears.checked ? [] :
+            Array.from(document.querySelectorAll('.year-check:checked')).map(c => c.value);
+        const sections = allSections.checked ? [] :
+            sectionInput.value.split(',').map(s => s.trim()).filter(Boolean);
+
+        if (!message) { showSmsAlert('warning', 'Please enter a message.'); return; }
+
+        const sendBtn   = document.querySelector('#smsForm button[type="submit"]');
+        const origLabel = sendBtn.innerHTML;
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending…';
+
+        fetch('/api/sms/send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({message, programs, years, sections})
+        })
+        .then(r => r.json())
+        .then(data => {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = origLabel;
+            if (data.success || data.sent > 0) {
+                showSmsAlert('success',
+                    `<strong>SMS sent!</strong> Delivered to <strong>${data.sent}</strong> recipient(s).`
+                    + (data.failed > 0 ? ` <span class="text-warning fw-semibold">${data.failed} failed.</span>` : ''));
+                messageInput.value = '';
+                charCount.textContent = '0';
+                loadSmsHistory();
+                scheduleCountUpdate();
+            } else {
+                showSmsAlert('danger', '<strong>Failed:</strong> ' + (data.error || 'Unknown error.'));
+            }
+        })
+        .catch(err => {
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = origLabel;
+            showSmsAlert('danger', '<strong>Request failed:</strong> ' + err.message);
+        });
+    });
+
+    // Init
+    scheduleCountUpdate();
+    loadSmsHistory();
+});
+
+
+let _countTimer = null;
+function scheduleCountUpdate() {
+    clearTimeout(_countTimer);
+    _countTimer = setTimeout(updateRecipientCount, 400);
+}
+
+function updateRecipientCount() {
+    const programs = document.getElementById('allPrograms').checked ? [] :
+        Array.from(document.querySelectorAll('.program-check:checked')).map(c => c.value);
+    const years    = document.getElementById('allYears').checked ? [] :
+        Array.from(document.querySelectorAll('.year-check:checked')).map(c => c.value);
+    const sections = document.getElementById('allSections').checked ? [] :
+        document.getElementById('sectionInput').value.split(',').map(s => s.trim()).filter(Boolean);
+
+    fetch('/api/students/count', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({programs, years, sections})
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('recipientCount').textContent =
+            data.count > 0 ? `${data.count} student(s)` : '0 students';
+    })
+    .catch(() => {});
+}
+
+function showSmsAlert(type, html) {
+    const el = document.getElementById('smsAlert');
+    el.className = `alert alert-${type}`;
+    el.innerHTML = html;
+    el.classList.remove('d-none');
+    setTimeout(() => el.classList.add('d-none'), 8000);
+}
+
+function loadSmsHistory() {
+    fetch('/api/sms/history')
+        .then(r => r.ok ? r.json() : {history: []})
+        .then(data => {
+            const div = document.getElementById('smsHistory');
+            if (data.history && data.history.length > 0) {
+                div.innerHTML = data.history.map(item => `
+                    <div class="mb-3 pb-3 border-bottom">
+                        <small class="text-muted d-block">${item.timestamp}</small>
+                        <p class="mb-1 small">${item.message}</p>
+                        <small class="text-muted"><i class="bi bi-people me-1"></i>${item.recipients}</small>
+                    </div>`).join('');
+            } else {
+                div.innerHTML = '<p class="text-muted text-center small">No SMS sent yet.</p>';
+            }
+        })
+        .catch(() => {});
+}
+</script>
+{% endblock %}
