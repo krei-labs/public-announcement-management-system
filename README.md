@@ -99,7 +99,8 @@ Add, edit, bulk-import (CSV), or remove student/contact records used across the 
 <p align="center"><img src="docs/screenshots/students.png" alt="PAMS Students screenshot" width="850"></p>
 
 ### SMS & Email — additional notification channels
-Compose and send SMS or email announcements to selected recipients, with a running history of what was sent. *(Provider access is disabled in this public build — see [External Notification Services](#-external-notification-services).)*
+Compose and send SMS or email announcements to selected recipients, with a running history of what was sent. *(Provider access is disabled in this public build 
+— see [External Notification Services](#-external-notification-services).)*
 
 <p align="center">
   <img src="docs/screenshots/sms.png" alt="PAMS SMS screenshot" width="485">
