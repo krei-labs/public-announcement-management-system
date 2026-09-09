@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">Public Announcement Management System (PAMS)</h1>
-
+ 
 <p align="center">
   A Raspberry Pi + Arduino–based campus communication platform for managing announcements across digital displays and public-address audio systems.
 </p>
