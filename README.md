@@ -130,7 +130,8 @@ Configure the Arduino serial port, audio output, display resolution, and default
 3. The Raspberry Pi display engine renders the resulting text, image, or video content and sends relay commands to the Arduino over a serial/USB connection.
 4. The Arduino firmware switches the relay bank, activating the targeted speaker zones — completing the loop from a single web action to a campus-wide broadcast.
 
-The SMS and email modules sit alongside the same Flask app but are disabled in this public build (see [External Notification Services](#-external-notification-services)).
+The SMS and email modules sit alongside the same Flask app but are disabled in this public build 
+(see [External Notification Services](#-external-notification-services)).
 
 ---
 
