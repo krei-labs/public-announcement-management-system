@@ -1,0 +1,10 @@
+# GitHub Linguist configuration for PAMS
+
+# Do not count Flask/Jinja HTML templates in language statistics
+templates/*.html linguist-detectable=false
+
+# Keep Python source files detectable
+*.py linguist-detectable=true
+
+# Keep Arduino source detectable
+*.ino linguist-detectable=true
