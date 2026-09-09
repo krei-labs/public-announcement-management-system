@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/screenshots/logo.png" width="90" alt="Tanauan City College logo">
+  <img src="docs/screenshots/logo.png" width="90" alt="PAMS Logo">
 </p>
 
 <h1 align="center">Public Announcement Management System (PAMS)</h1>
