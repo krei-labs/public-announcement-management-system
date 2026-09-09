@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">Public Announcement Management System (PAMS)</h1>
- 
+
 <p align="center">
   A Raspberry Pi + Arduino–based campus communication platform for managing announcements across digital displays and public-address audio systems.
 </p>
@@ -71,37 +71,37 @@ A quick look at the admin web interface.
 ### Dashboard — live system & speaker status
 Real-time CPU/memory/disk metrics, a live clock, per-zone speaker status with LED indicators, the idle-display media manager, and a rolling activity log.
 
-<img src="docs/screenshots/dashboard.png" alt="PAMS Dashboard screenshot" width="850">
+<p align="center"><img src="docs/screenshots/dashboard.png" alt="PAMS Dashboard screenshot" width="850"></p>
 
 ### Announcements — display & audio control
 Switch idle-display modes (welcome screen, slideshow, video loop), push live text to the display, and generate or play TTS/audio announcements.
 
-<img src="docs/screenshots/announcements.png" alt="PAMS Announcements screenshot" width="850">
+<p align="center"><img src="docs/screenshots/announcements.png" alt="PAMS Announcements screenshot" width="850"></p>
 
 ### Login
 Role-based sign-in screen for administrators.
 
-<img src="docs/screenshots/login.png" alt="PAMS Login screenshot" width="420">
+<p align="center"><img src="docs/screenshots/login.png" alt="PAMS Login screenshot" width="420"></p>
 
 ### Schedule — recurring & one-off announcements
 View active schedules and queue new text, audio, video, or TTS announcements for a future date and time.
 
-<img src="docs/screenshots/schedule.png" alt="PAMS Schedule screenshot" width="850">
+<p align="center"><img src="docs/screenshots/schedule.png" alt="PAMS Schedule screenshot" width="850"></p>
 
 ### Emergency — one-tap crisis broadcast
 Trigger fire, earthquake, lockdown, evacuation, or medical alerts that override every display and speaker zone at once, plus manage emergency audio files and procedures.
 
-<img src="docs/screenshots/emergency.png" alt="PAMS Emergency screenshot" width="850">
+<p align="center"><img src="docs/screenshots/emergency.png" alt="PAMS Emergency screenshot" width="850"></p>
 
 ### Students — recipient database
 Add, edit, bulk-import (CSV), or remove student/contact records used across the announcement workflow.
 
-<img src="docs/screenshots/students.png" alt="PAMS Students screenshot" width="850">
+<p align="center"><img src="docs/screenshots/students.png" alt="PAMS Students screenshot" width="850"></p>
 
 ### SMS & Email — additional notification channels
 Compose and send SMS or email announcements to selected recipients, with a running history of what was sent. *(Provider access is disabled in this public build — see [External Notification Services](#-external-notification-services).)*
 
-<p>
+<p align="center">
   <img src="docs/screenshots/sms.png" alt="PAMS SMS screenshot" width="415">
   <img src="docs/screenshots/email.png" alt="PAMS Email screenshot" width="415">
 </p>
@@ -109,18 +109,18 @@ Compose and send SMS or email announcements to selected recipients, with a runni
 ### Logs — full activity history
 Filter the complete system activity log by type, status, or date range, and export results to CSV.
 
-<img src="docs/screenshots/logs.png" alt="PAMS Logs screenshot" width="850">
+<p align="center"><img src="docs/screenshots/logs.png" alt="PAMS Logs screenshot" width="850"></p>
 
 ### Settings — device configuration & diagnostics
 Configure the Arduino serial port, audio output, display resolution, and default volume; test individual relays/speakers; and manage admin/staff user accounts.
 
-<img src="docs/screenshots/settings.png" alt="PAMS Settings screenshot" width="850">
+<p align="center"><img src="docs/screenshots/settings.png" alt="PAMS Settings screenshot" width="850"></p>
 
 ---
 
 ## 🏗️ System Architecture
 
-<img src="docs/screenshots/architecture.png" alt="PAMS system architecture diagram" width="850">
+<p align="center"><img src="docs/screenshots/architecture.png" alt="PAMS system architecture diagram" width="850"></p>
 
 **Data flow**
 
