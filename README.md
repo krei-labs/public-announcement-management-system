@@ -102,7 +102,7 @@ Add, edit, bulk-import (CSV), or remove student/contact records used across the 
 Compose and send SMS or email announcements to selected recipients, with a running history of what was sent. *(Provider access is disabled in this public build — see [External Notification Services](#-external-notification-services).)*
 
 <p align="center">
-  <img src="docs/screenshots/sms.png" alt="PAMS SMS screenshot" width="490">
+  <img src="docs/screenshots/sms.png" alt="PAMS SMS screenshot" width="485">
   <img src="docs/screenshots/email.png" alt="PAMS Email screenshot" width="415">
 </p>
 
