@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/screenshots/logo.png" width="270" alt="PAMS Logo">
+  <img src="docs/screenshots/logo.png" width="180" alt="PAMS Logo">
 </p>
 
 <h1 align="center">Public Announcement Management System (PAMS)</h1>
