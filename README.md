@@ -399,7 +399,7 @@ This project was developed as an academic thesis project. If you intend to reuse
 
 **Christian G. Maranan**
 Computer Engineering Student — Major in Machine Learning
-Tanauan City College
+at Tanauan City College
 
 - **GitHub:** [@krei-labs](https://github.com/krei-labs)
 - **Email:** [christianmaranan0303@gmail.com](mailto:christianmaranan0303@gmail.com)
