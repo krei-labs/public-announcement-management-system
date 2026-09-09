@@ -103,7 +103,7 @@ Compose and send SMS or email announcements to selected recipients, with a runni
 — see [External Notification Services](#-external-notification-services).)*
 
 <p align="center">
-  <img src="docs/screenshots/sms.png" alt="PAMS SMS screenshot" width="485">
+  <img src="docs/screenshots/sms.png" alt="PAMS SMS screenshot" width="465">
   <img src="docs/screenshots/email.png" alt="PAMS Email screenshot" width="415">
 </p>
 
