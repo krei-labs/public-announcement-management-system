@@ -21,7 +21,7 @@
 
 PAMS is an academic thesis project that combines a **Flask web application, SQLite database, Raspberry Pi, Arduino-controlled speaker zones, digital display rendering, audio/TTS processing, and announcement scheduling** into one centralized campus communication platform — giving administrators a single dashboard to create, schedule, broadcast, and monitor campus-wide announcements.
 
-> **Portfolio note:** This repository is a cleaned, sanitized public version of the thesis project. Private credentials, deployment data, personal records, runtime databases, generated media, and machine-specific configuration have been excluded. See [Security & Privacy](#-security--privacy) below.
+> **Note:** This repository is a cleaned, sanitized public version of the thesis project. Private credentials, deployment data, personal records, runtime databases, generated media, and machine-specific configuration have been excluded. See [Security & Privacy](#-security--privacy) below.
 
 ---
 
